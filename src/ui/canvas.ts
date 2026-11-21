@@ -1,5 +1,5 @@
 import { config } from '../config';
-import { canBuild, canWire, findBuilding, isConsumer, isGridNode, supplierFor, tileDistance, wireCost, wireEnds } from '../sim';
+import { canBuild, canWire, findBuilding, isConsumer, isGridNode, machineRadius, supplierFor, tileDistance, wireCost, wireEnds } from '../sim';
 import type { Building, GameState, GridNodeKind, TileKind } from '../sim';
 import { BUILDING_ICONS } from './labels';
 import { OVERLAYS, rampColor, type OverlayMode } from './overlay';
@@ -253,6 +253,18 @@ export function drawMap(canvas: HTMLCanvasElement, state: GameState, view: MapVi
     }
   }
 
+  // Effect area of the selected or hovered machine
+  const areaOf = (pos: { x: number; y: number } | null) => {
+    if (!pos) return;
+    const b = state.buildings.find((o) => o.x === pos.x && o.y === pos.y);
+    const r = b ? machineRadius(config, b.kind) : null;
+    if (b && r !== null) drawEffectArea(ctx, b, r, px);
+  };
+  if (!tool) {
+    areaOf(selected);
+    if (!selected || !hover || hover.x !== selected.x || hover.y !== selected.y) areaOf(hover);
+  }
+
   // Selection
   if (selected) {
     ctx.strokeStyle = cssVar('--accent');
@@ -267,6 +279,8 @@ export function drawMap(canvas: HTMLCanvasElement, state: GameState, view: MapVi
     if (tool && tool !== 'wire') {
       const ok = canBuild(state, config, tool, hover.x, hover.y) === null;
       if (isGridNode(config, tool)) drawSupplyPreview(ctx, tool, hover, px);
+      const r = machineRadius(config, tool);
+      if (r !== null) drawEffectArea(ctx, hover, r, px);
       if (tool === 'pole' && ok && lastPoleId !== null) {
         const last = findBuilding(state, lastPoleId);
         if (last) drawChainPreview(ctx, state, last, hover, px);
@@ -339,5 +353,14 @@ function drawChainPreview(
   ctx.moveTo(last.x * px + px / 2, last.y * px + px / 2);
   ctx.lineTo(at.x * px + px / 2, at.y * px + px / 2);
   ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+/** Dashed outline of the area a machine affects. */
+function drawEffectArea(ctx: CanvasRenderingContext2D, at: { x: number; y: number }, r: number, px: number): void {
+  ctx.strokeStyle = cssVar('--effect');
+  ctx.lineWidth = 2.5;
+  ctx.setLineDash([4, 3]);
+  ctx.strokeRect((at.x - r) * px + 1, (at.y - r) * px + 1, (2 * r + 1) * px - 2, (2 * r + 1) * px - 2);
   ctx.setLineDash([]);
 }

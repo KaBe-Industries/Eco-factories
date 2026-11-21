@@ -17,6 +17,7 @@
   --tooltip-bg: #1f2a24;
   --bad: #c0392b;
   --wire-reach: #2b2b2b;
+  --effect: #7d3cc8;
   --wire-point: rgba(40, 40, 40, 0.55);
   --good: #2e9d4f;
   --pole: #4a3420;
@@ -45,6 +46,7 @@
     --tooltip-bg: #e6ebe7;
     --bad: #ff6b5e;
     --wire-reach: #f0e6c8;
+    --effect: #c9a2ff;
     --wire-point: rgba(240, 230, 200, 0.6);
     --good: #5fd38a;
     --pole: #d9c29a;
@@ -164,3 +166,4 @@ button.build .desc { grid-area: desc; font-size: 12px; opacity: 0.8; }
   #tooltip .good { color: #1e7a3a; }
 }
 #popup .muted { color: var(--muted); font-size: 12px; }
+.badge.playtest { background: #7d5ba6; margin-left: 0; }

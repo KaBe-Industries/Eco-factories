@@ -50,7 +50,7 @@ export const OVERLAYS: Record<OverlayMode, OverlayInfo> = {
   },
   pollination: {
     label: '🐝 Opylení',
-    legend: 'Žlutá pole jsou opylená. Zatím nic opylené není – opylování přijde s rozprašovačem a včelami.',
+    legend: 'Žlutá pole jsou právě opylená (rozprašovačem pylu, později včelami). Bez rostlin zatím opylení nic nedělá.',
     ramp: [
       [245, 200, 20],
       [245, 200, 20],

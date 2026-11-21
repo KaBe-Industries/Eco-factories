@@ -47,6 +47,8 @@ export interface Tile {
   toxicity: number;
   /** 0–100 */
   moisture: number;
+  /** Natural moisture of the tile (from distance to the river). Moisture drifts back to it. */
+  baseMoisture: number;
   life: TileLife;
   /** Item lying on this tile (belts carry items this way). */
   item: ItemKind | null;

@@ -3,6 +3,7 @@ import { energyOutputOf, energyUseOf, findBuilding, isBuildable, refundFor, tile
 import type { GameState } from '../sim';
 import { BUILDING_ICONS, BUILDING_LABELS, fmt } from './labels';
 import { networkLine, powerStatus } from './power';
+import { machineEffectLine } from './tooltip';
 
 export type Selection =
   | { type: 'building'; id: number }
@@ -39,6 +40,8 @@ export function popupHtml(state: GameState, sel: Selection): string | null {
   if (!b) return null;
   const head = `<div class="popup-head"><b>${BUILDING_ICONS[b.kind]} ${BUILDING_LABELS[b.kind]}</b><button class="close" data-action="close">✕</button></div>`;
   const lines: string[] = [];
+  const effect = machineEffectLine(b);
+  if (effect) lines.push(effect);
   const out = energyOutputOf(state, config, b);
   const use = energyUseOf(config, b);
   if (out > 0) lines.push(`Vyrábí ${fmt(out, 1)} ⚡`);

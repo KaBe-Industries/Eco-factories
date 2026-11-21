@@ -7,3 +7,4 @@ export * from './map';
 export * from './buildings';
 export * from './wind';
 export * from './grid';
+export * from './environment';

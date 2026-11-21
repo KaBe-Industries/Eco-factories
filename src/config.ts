@@ -62,6 +62,17 @@ export const config = {
   },
 
   /**
+   * Playtest mode for trying the game in the browser without grinding.
+   * Only the browser game uses it; tests and balance bots always run with
+   * the real numbers above. Add ?ostre to the page address to play the
+   * real game. Set enabled: false for the final playtest.
+   */
+  playtest: {
+    enabled: true,
+    startMaterial: 500,
+  },
+
+  /**
    * Buildings the player can place. energyOutput is per tick at full
    * power; energyUse is the demand of a running machine.
    */
@@ -118,6 +129,25 @@ export const config = {
   ruins: {
     dismantleTicks: 10,
     material: 20,
+  },
+
+  /** What running machines do each tick at full power (phase 3). */
+  machines: {
+    soilCleaner: { radius: 2, toxicityPerTick: 1 },
+    irrigator: { radius: 2, moisturePerTick: 1 },
+    filterStation: { riverQualityPerTick: 0.3 },
+    pollenSprayer: { radius: 3 },
+  },
+
+  /** Natural processes that run without the player (phase 3). */
+  environment: {
+    /**
+     * Moisture drifts back toward the tile's natural level (set by distance
+     * from the river) by this much per tick: extra water evaporates.
+     */
+    moistureDriftPerTick: 0.05,
+    /** River quality slowly falls back toward its starting level. */
+    riverQualityDecayPerTick: 0.02,
   },
 
   /** Phase 8 logistics. Present from the start so the data model is ready. */

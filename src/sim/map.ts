@@ -150,11 +150,13 @@ export function generateMap(config: Config): GeneratedMap {
   tiles.forEach((t, i) => {
     if (t.kind === 'river') {
       t.moisture = moisture.riverTile;
+      t.baseMoisture = moisture.riverTile;
       return;
     }
     const base = moisture.atRiver - (dist[i] - 1) * moisture.lossPerTile;
     const jitter = rand.range(-moisture.jitter, moisture.jitter);
     t.moisture = Math.round(Math.max(moisture.min, Math.min(100, base + jitter)));
+    t.baseMoisture = t.moisture;
   });
 
   // --- Databank ------------------------------------------------------------

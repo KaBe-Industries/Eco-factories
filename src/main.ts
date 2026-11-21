@@ -11,7 +11,10 @@ import { tooltipHtml } from './ui/tooltip';
 import { setHtml } from './ui/dom';
 
 // ---- UI state (not part of the simulation) -------------------------------
+/** Playtest mode: more starting material for trying things out (see config.playtest). */
+const playtest = config.playtest.enabled && !new URLSearchParams(location.search).has('ostre');
 let state: GameState = createInitialState(config);
+if (playtest) state = { ...state, material: config.playtest.startMaterial };
 let speedIndex = 1; // 1× by default
 let lastSpeedIndex = 1;
 let overlay: OverlayMode = 'none';
@@ -70,7 +73,7 @@ function selectedTile(): { x: number; y: number } | null {
 }
 
 function render(): void {
-  renderTopbar(topbar, state, speedIndex);
+  renderTopbar(topbar, state, speedIndex, playtest);
   renderSidepanel(side, state, tool, overlay);
   drawMap(canvas, state, {
     overlay,

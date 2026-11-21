@@ -4,6 +4,7 @@ import {
   canWire,
   energyOutputOf,
   findBuilding,
+  inMachineArea,
   isConsumer,
   isGridNode,
   isRiverBank,
@@ -30,6 +31,8 @@ export function tooltipHtml(state: GameState, x: number, y: number, ctx: Tooltip
   lines.push(`<b>${building ? BUILDING_LABELS[building.kind] : TILE_LABELS[t.kind]}</b>`);
   if (building?.kind === 'databank') lines.push('Uchovává semena a spory. Nedá se zbourat.');
   if (building) {
+    const effect = machineEffectLine(building);
+    if (effect) lines.push(effect);
     const out = energyOutputOf(state, config, building);
     if (out > 0) lines.push(`Vyrábí ${fmt(out, 1)} ⚡`);
     const status = powerStatus(building);
@@ -41,7 +44,10 @@ export function tooltipHtml(state: GameState, x: number, y: number, ctx: Tooltip
     lines.push(`Kvalita řeky: ${Math.round(state.riverQuality)}`);
   } else {
     lines.push(`Toxicita: ${Math.round(t.toxicity)}`);
-    lines.push(`Vlhkost: ${Math.round(t.moisture)}`);
+    const natural = Math.round(t.baseMoisture);
+    lines.push(`Vlhkost: ${Math.round(t.moisture)}${Math.round(t.moisture) !== natural ? ` <span class="muted">(přirozeně ${natural})</span>` : ''}`);
+    const effects = machineEffectsOn(state, x, y);
+    if (effects.length) lines.push(...effects);
     if (t.kind === 'hill') lines.push('Větrník tu dává ×1,5 energie.');
     if (t.kind === 'ruin') {
       lines.push(
@@ -99,4 +105,34 @@ function wireHint(state: GameState, target: ReturnType<typeof findBuilding>, wir
   const reason = canWire(state, config, wireStart, target.id);
   if (reason) return `<span class="bad">✖ ${WIRE_BLOCK_LABELS[reason]}</span>`;
   return `<span class="good">✔ Drát délky ${length} za 🧱 ${wireCost(config, length)}</span>`;
+}
+
+/** What a machine does, at its current power. */
+export function machineEffectLine(b: NonNullable<ReturnType<typeof findBuilding>>): string | null {
+  const m = config.machines;
+  const p = b.power;
+  switch (b.kind) {
+    case 'soilCleaner':
+      return `Čistí půdu v okruhu ${m.soilCleaner.radius}: toxicita −${fmt(m.soilCleaner.toxicityPerTick * p, 2)} za tick`;
+    case 'irrigator':
+      return `Zavlažuje v okruhu ${m.irrigator.radius}: vlhkost +${fmt(m.irrigator.moisturePerTick * p, 2)} za tick`;
+    case 'filterStation':
+      return `Čistí řeku: kvalita +${fmt(m.filterStation.riverQualityPerTick * p, 2)} za tick`;
+    case 'pollenSprayer':
+      return `Opyluje v okruhu ${m.pollenSprayer.radius}${p < 1 && p > 0 ? ` (jen každý ${fmt(1 / p, 1)}. tick)` : ''}`;
+    default:
+      return null;
+  }
+}
+
+/** Running machines whose area covers tile (x, y). */
+function machineEffectsOn(state: GameState, x: number, y: number): string[] {
+  const out: string[] = [];
+  for (const b of state.buildings) {
+    if (b.power <= 0 || !inMachineArea(config, b, x, y)) continue;
+    if (b.kind === 'soilCleaner') out.push('<span class="muted">🧽 Čistička tu snižuje toxicitu</span>');
+    if (b.kind === 'irrigator') out.push('<span class="muted">💧 Závlaha tu zvyšuje vlhkost</span>');
+    if (b.kind === 'pollenSprayer') out.push('<span class="muted">🌼 Rozprašovač tu opyluje</span>');
+  }
+  return [...new Set(out)];
 }

@@ -3,6 +3,7 @@ import { updateGrid } from './grid';
 import { updateRuins } from './buildings';
 import type { GameState } from './types';
 import { updateWind } from './wind';
+import { updateEnvironment, updateMachines } from './environment';
 
 /**
  * Advances the simulation by one tick. Pure function: never mutates the
@@ -14,6 +15,8 @@ export function step(state: GameState, config: Config): GameState {
   updateWind(s, config);
   updateRuins(s, config);
   updateGrid(s, config);
+  updateMachines(s, config);
+  updateEnvironment(s, config);
   return s;
 }
 
