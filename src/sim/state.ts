@@ -1,5 +1,6 @@
 import type { Config } from '../config';
 import { generateMap } from './map';
+import { windAt } from './wind';
 import type { Building, BuildingKind, GameState, Inventory, Tile } from './types';
 
 export const STATE_VERSION = 1;
@@ -56,7 +57,8 @@ export function createInitialState(config: Config): GameState {
     buildings: map.buildings,
     nextBuildingId: map.nextBuildingId,
     material: config.start.material,
-    wind: 0,
+    wind: windAt(config, 0, 0),
+    windNoise: 0,
     riverQuality: config.start.riverQuality,
     pollution: config.start.pollution,
     bees: 0,

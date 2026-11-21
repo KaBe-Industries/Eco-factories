@@ -4,3 +4,5 @@ export * from './step';
 export * from './commands';
 export * from './rng';
 export * from './map';
+export * from './buildings';
+export * from './wind';

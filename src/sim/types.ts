@@ -124,7 +124,10 @@ export interface GameState {
   nextBuildingId: number;
 
   material: number;
+  /** Current wind multiplier for windmills. */
   wind: number;
+  /** Random component of the wind (smoothed random walk). */
+  windNoise: number;
   riverQuality: number;
   pollution: number;
   /** Bee population 0–100. */

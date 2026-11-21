@@ -1,5 +1,6 @@
 import { config } from '../config';
-import type { GameState, TileKind } from '../sim';
+import { canBuild, energyUseOf } from '../sim';
+import type { BuildableKind, GameState, TileKind } from '../sim';
 import { BUILDING_ICONS } from './labels';
 import { OVERLAYS, rampColor, type OverlayMode } from './overlay';
 
@@ -53,12 +54,17 @@ const OVERLAY_MAX_ALPHA = 0.8;
 /** Opacity of ramp overlays. */
 const RAMP_ALPHA = 0.85;
 
-export function drawMap(
-  canvas: HTMLCanvasElement,
-  state: GameState,
-  overlay: OverlayMode,
-  hover: { x: number; y: number } | null,
-): void {
+export interface MapView {
+  overlay: OverlayMode;
+  hover: { x: number; y: number } | null;
+  /** Building selected in the build menu (placement preview). */
+  tool: BuildableKind | null;
+  /** Tile of the selected building or ruin. */
+  selected: { x: number; y: number } | null;
+}
+
+export function drawMap(canvas: HTMLCanvasElement, state: GameState, view: MapView): void {
+  const { overlay, hover, tool, selected } = view;
   const px = config.ui.tilePx;
   const dpr = window.devicePixelRatio || 1;
   const w = state.width * px;
@@ -112,6 +118,13 @@ export function drawMap(
       ctx.fillRect(x + px * 0.5, y + px * 0.3, px * 0.3, px * 0.5);
     }
 
+    if (t.dismantleProgress !== null) {
+      ctx.fillStyle = cssVar('--progress-bg');
+      ctx.fillRect(x + 4, y + px - 8, px - 8, 4);
+      ctx.fillStyle = cssVar('--accent');
+      ctx.fillRect(x + 4, y + px - 8, ((px - 8) * t.dismantleProgress) / config.ruins.dismantleTicks, 4);
+    }
+
     const fill = overlayFill(state, overlay, i);
     if (fill) {
       ctx.fillStyle = fill;
@@ -139,18 +152,48 @@ export function drawMap(
 
   // Buildings
   ctx.font = `${Math.round(px * 0.7)}px system-ui, "Apple Color Emoji", "Segoe UI Emoji", sans-serif`;
+  const smallFont = `${Math.round(px * 0.32)}px system-ui, "Apple Color Emoji", "Segoe UI Emoji", sans-serif`;
+  const iconFont = ctx.font;
   for (const b of state.buildings) {
     const x = b.x * px;
     const y = b.y * px;
     ctx.fillStyle = cssVar('--building-bg');
     ctx.fillRect(x + 2, y + 2, px - 4, px - 4);
+    ctx.globalAlpha = b.enabled ? 1 : 0.35;
+    ctx.font = iconFont;
     ctx.fillText(BUILDING_ICONS[b.kind], x + px / 2, y + px / 2 + 1);
+    ctx.globalAlpha = 1;
+    ctx.font = smallFont;
+    if (!b.enabled) {
+      ctx.fillText('⏸', x + px - 8, y + 9);
+    } else if (state.energy.ratio < 1 && energyUseOf(config, b) > 0) {
+      ctx.fillText('🪫', x + px - 8, y + 9);
+    }
+  }
+  ctx.font = iconFont;
+
+  // Selection
+  if (selected) {
+    ctx.strokeStyle = cssVar('--accent');
+    ctx.lineWidth = 3;
+    ctx.strokeRect(selected.x * px + 1.5, selected.y * px + 1.5, px - 3, px - 3);
   }
 
-  // Hover highlight
+  // Hover: placement preview or plain highlight
   if (hover) {
-    ctx.strokeStyle = cssVar('--text');
-    ctx.lineWidth = 2;
-    ctx.strokeRect(hover.x * px + 1, hover.y * px + 1, px - 2, px - 2);
+    const hx = hover.x * px;
+    const hy = hover.y * px;
+    if (tool) {
+      const ok = canBuild(state, config, tool, hover.x, hover.y) === null;
+      ctx.fillStyle = ok ? 'rgba(60, 180, 90, 0.45)' : 'rgba(220, 50, 50, 0.45)';
+      ctx.fillRect(hx, hy, px, px);
+      ctx.globalAlpha = 0.6;
+      ctx.fillText(BUILDING_ICONS[tool], hx + px / 2, hy + px / 2 + 1);
+      ctx.globalAlpha = 1;
+    } else {
+      ctx.strokeStyle = cssVar('--text');
+      ctx.lineWidth = 2;
+      ctx.strokeRect(hx + 1, hy + 1, px - 2, px - 2);
+    }
   }
 }

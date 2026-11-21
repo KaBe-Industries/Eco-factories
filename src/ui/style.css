@@ -15,6 +15,8 @@
   --hill-mark: #7c7a44;
   --building-bg: rgba(255, 255, 255, 0.75);
   --tooltip-bg: #1f2a24;
+  --bad: #c0392b;
+  --progress-bg: rgba(0, 0, 0, 0.35);
   --tooltip-text: #f4f1ea;
 }
 @media (prefers-color-scheme: dark) {
@@ -35,6 +37,8 @@
     --hill-mark: #54522e;
     --building-bg: rgba(230, 235, 231, 0.8);
     --tooltip-bg: #e6ebe7;
+    --bad: #ff6b5e;
+    --progress-bg: rgba(0, 0, 0, 0.5);
     --tooltip-text: #161a17;
   }
 }
@@ -57,6 +61,7 @@ body {
 #topbar .title { font-weight: 700; }
 #topbar .stat { color: var(--muted); }
 #topbar .stat b { color: var(--text); }
+#topbar .stats { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
 #topbar .speeds { display: flex; gap: 4px; margin-left: auto; }
 button {
   font: inherit;
@@ -99,3 +104,50 @@ canvas { display: block; border: 1px solid var(--border); border-radius: 4px; }
   max-width: 260px;
 }
 #tooltip .muted { opacity: 0.7; }
+#map-wrap { position: relative; }
+#topbar .stat.warn b, .warn { color: var(--bad); }
+.badge {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--bad);
+  color: #fff;
+  font-size: 12px;
+}
+button:disabled { opacity: 0.45; cursor: not-allowed; }
+.build-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+button.build {
+  display: grid;
+  grid-template-columns: 28px 1fr auto;
+  grid-template-areas: "icon name meta" "icon desc desc";
+  align-items: center;
+  column-gap: 8px;
+  text-align: left;
+  padding: 6px 10px;
+}
+button.build .icon { grid-area: icon; font-size: 20px; }
+button.build .name { grid-area: name; font-weight: 600; }
+button.build .meta { grid-area: meta; font-size: 12px; white-space: nowrap; }
+button.build .desc { grid-area: desc; font-size: 12px; opacity: 0.8; }
+.hint { font-size: 13px; }
+#popup {
+  display: none;
+  position: absolute;
+  z-index: 5;
+  width: 230px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+#popup p { margin: 6px 0; }
+.popup-head { display: flex; justify-content: space-between; align-items: center; }
+.popup-head .close { padding: 0 6px; border: none; background: none; }
+#tooltip .bad { color: #ff8a80; }
+#tooltip .good { color: #9be7a8; }
+@media (prefers-color-scheme: dark) {
+  #tooltip .bad { color: #b3261e; }
+  #tooltip .good { color: #1e7a3a; }
+}

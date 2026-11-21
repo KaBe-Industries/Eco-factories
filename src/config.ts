@@ -61,6 +61,44 @@ export const config = {
     pollution: 10,
   },
 
+  /**
+   * Buildings the player can place. energyOutput is per tick at full
+   * power; energyUse is the demand of a running machine.
+   */
+  buildings: {
+    coalPlant: { cost: 15, energyUse: 0, energyOutput: 10 },
+    windmill: { cost: 35, energyUse: 0, energyOutput: 4 },
+    soilCleaner: { cost: 20, energyUse: 3, energyOutput: 0 },
+    irrigator: { cost: 15, energyUse: 2, energyOutput: 0 },
+    filterStation: { cost: 30, energyUse: 4, energyOutput: 0 },
+    pollenSprayer: { cost: 20, energyUse: 2, energyOutput: 0 },
+  },
+
+  /** Share of the cost returned when a building is demolished. */
+  demolishRefund: 0.5,
+
+  /** Windmill output multiplier when standing on a hill. */
+  windmillHillMultiplier: 1.5,
+
+  wind: {
+    min: 0.3,
+    max: 1.2,
+    /** Average wind the sine wave oscillates around. */
+    base: 0.75,
+    sineAmplitude: 0.3,
+    /** Length of one full calm–gusty cycle in ticks. */
+    sinePeriodTicks: 120,
+    /** Max change of the random part per tick. */
+    noiseStep: 0.04,
+    /** Max size of the random part. */
+    noiseMax: 0.2,
+  },
+
+  ruins: {
+    dismantleTicks: 10,
+    material: 20,
+  },
+
   /** Phase 8 logistics. Present from the start so the data model is ready. */
   logistics: {
     /** Max items one belt tile carries. */

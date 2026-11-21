@@ -1,4 +1,4 @@
-import type { BuildingKind, TileKind } from '../sim';
+import type { BuildBlockReason, BuildableKind, BuildingKind, TileKind } from '../sim';
 
 export const TILE_LABELS: Record<TileKind, string> = {
   soil: 'Půda',
@@ -32,3 +32,27 @@ export const BUILDING_ICONS: Record<BuildingKind, string> = {
   belt: '➡️',
   sludgeProcessor: '♻️',
 };
+
+
+export const BUILDING_DESCRIPTIONS: Record<BuildableKind, string> = {
+  coalPlant: 'Levná a silná energie. Znečišťuje ovzduší.',
+  windmill: 'Čistá energie podle větru. Na kopci ×1,5.',
+  soilCleaner: 'Snižuje toxicitu půdy v okruhu 2.',
+  irrigator: 'Zvyšuje vlhkost půdy v okruhu 2.',
+  filterStation: 'Čistí řeku. Jen na břehu řeky.',
+  pollenSprayer: 'Opyluje rostliny v okruhu 3.',
+};
+
+export const BUILD_BLOCK_LABELS: Record<BuildBlockReason, string> = {
+  outOfMap: 'Mimo mapu.',
+  river: 'Do řeky se stavět nedá.',
+  ruin: 'Ruinu je nejdřív potřeba rozebrat.',
+  occupied: 'Pole je obsazené.',
+  notRiverBank: 'Filtrační stanice musí stát na břehu řeky.',
+  noMaterial: 'Nedostatek materiálu.',
+};
+
+/** Czech number formatting (decimal comma). */
+export function fmt(n: number, digits = 0): string {
+  return n.toLocaleString('cs-CZ', { minimumFractionDigits: digits, maximumFractionDigits: digits });
+}
