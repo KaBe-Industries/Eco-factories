@@ -136,6 +136,12 @@ Vysazení druhu stojí 5 materiálu za pole. Šíření pak probíhá samo.
 ## Znečištění a kolaps
 - `pollution` roste z uhelných elektráren, samo klesá o 0,05 za tick,
   každé pole s rostlinami ho snižuje o 0,002 za tick.
+- Místní zamoření půdy: běžící uhelná elektrárna navíc zvyšuje toxicity
+  půdy kolem sebe v okruhu 2: +1,5 za tick na sousedních polích, +0,75
+  za tick o pole dál. U elektrárny tak čistička půdy (−1) prohrává a houby
+  se tam neuchytí. Na overlayi toxicity je kolem elektrárny vidět skvrna
+  a tooltip pole ukáže "Elektrárna tu zamořuje půdu". Čísla jsou v configu
+  a ladí se ve fázi 7.
 - Nad pollution 40: zjeví se duch včely s varováním (vždy dřív, než se něco stane).
 - Nad pollution 50: kyselé deště. Včely ubývají o 3 % za tick, rostliny
   bez opylení přestávají růst a pomalu odumírají, toxicity na polích lehce roste.
