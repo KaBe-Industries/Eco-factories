@@ -1,8 +1,9 @@
 import { config } from '../config';
-import { canBuild, gridLinks, isConsumer, isGridNode, linksFor, supplierFor } from '../sim';
-import type { BuildableKind, GameState, GridNodeKind, TileKind } from '../sim';
+import { canBuild, canWire, findBuilding, isConsumer, isGridNode, supplierFor, tileDistance, wireCost, wireEnds } from '../sim';
+import type { Building, GameState, GridNodeKind, TileKind } from '../sim';
 import { BUILDING_ICONS } from './labels';
 import { OVERLAYS, rampColor, type OverlayMode } from './overlay';
+import { networkColor, type Tool } from './tools';
 
 function cssVar(name: string): string {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
@@ -57,14 +58,20 @@ const RAMP_ALPHA = 0.85;
 export interface MapView {
   overlay: OverlayMode;
   hover: { x: number; y: number } | null;
-  /** Building selected in the build menu (placement preview). */
-  tool: BuildableKind | null;
+  /** Building or wire tool picked in the side panel. */
+  tool: Tool;
   /** Tile of the selected building or ruin. */
   selected: { x: number; y: number } | null;
+  /** Selected wire (clicked to demolish). */
+  selectedWireId: number | null;
+  /** Wire tool: the node the wire starts from. */
+  wireStart: number | null;
+  /** Pole chaining: the last pole placed with the pole tool. */
+  lastPoleId: number | null;
 }
 
 export function drawMap(canvas: HTMLCanvasElement, state: GameState, view: MapView): void {
-  const { overlay, hover, tool, selected } = view;
+  const { overlay, hover, tool, selected, selectedWireId, wireStart, lastPoleId } = view;
   const px = config.ui.tilePx;
   const dpr = window.devicePixelRatio || 1;
   const w = state.width * px;
@@ -151,9 +158,10 @@ export function drawMap(canvas: HTMLCanvasElement, state: GameState, view: MapVi
   ctx.globalAlpha = 1;
 
   const center = (b: { x: number; y: number }): [number, number] => [b.x * px + px / 2, b.y * px + px / 2];
+  const networkIds = state.energy.networks.map((n) => n.id);
 
   // Power coverage while placing a building: tiles some grid node reaches
-  if (tool) {
+  if (tool && tool !== 'wire') {
     ctx.fillStyle = cssVar('--coverage');
     for (let ty = 0; ty < state.height; ty++) {
       for (let tx = 0; tx < state.width; tx++) {
@@ -163,15 +171,21 @@ export function drawMap(canvas: HTMLCanvasElement, state: GameState, view: MapVi
     }
   }
 
-  // Power lines between connected grid nodes
-  ctx.strokeStyle = cssVar('--wire');
-  ctx.lineWidth = 2;
-  for (const [a, b] of gridLinks(state, config)) {
+  // Wires, coloured by grid; dashed when the grid has no power source
+  for (const w of state.wires) {
+    const ends = wireEnds(state, w);
+    if (!ends) continue;
+    const net = state.energy.networks.find((n) => n.id === ends[0].networkId);
+    const selectedWire = w.id === selectedWireId;
+    ctx.strokeStyle = networkColor(networkIds, ends[0].networkId);
+    ctx.lineWidth = selectedWire ? 5 : 2.5;
+    ctx.setLineDash(net && net.produced > 0 ? [] : [6, 4]);
     ctx.beginPath();
-    ctx.moveTo(...center(a));
-    ctx.lineTo(...center(b));
+    ctx.moveTo(...center(ends[0]));
+    ctx.lineTo(...center(ends[1]));
     ctx.stroke();
   }
+  ctx.setLineDash([]);
 
   // Buildings
   ctx.font = `${Math.round(px * 0.7)}px system-ui, "Apple Color Emoji", "Segoe UI Emoji", sans-serif`;
@@ -182,7 +196,7 @@ export function drawMap(canvas: HTMLCanvasElement, state: GameState, view: MapVi
     const y = b.y * px;
     ctx.globalAlpha = b.enabled ? 1 : 0.35;
     if (b.kind === 'pole') {
-      drawPole(ctx, x, y, px);
+      drawPole(ctx, x, y, px, state.wires.some((w) => w.a === b.id || w.b === b.id) ? networkColor(networkIds, b.networkId) : null);
     } else {
       ctx.globalAlpha = 1;
       ctx.fillStyle = cssVar('--building-bg');
@@ -203,6 +217,42 @@ export function drawMap(canvas: HTMLCanvasElement, state: GameState, view: MapVi
   }
   ctx.font = iconFont;
 
+  // Wire tool: rings on connection points; from a start point, which ones are in reach
+  if (tool === 'wire') {
+    const start = wireStart !== null ? findBuilding(state, wireStart) : undefined;
+    if (start) {
+      const r = config.wire.maxLength;
+      ctx.setLineDash([6, 4]);
+      ctx.strokeStyle = cssVar('--wire-reach');
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect((start.x - r) * px, (start.y - r) * px, (2 * r + 1) * px, (2 * r + 1) * px);
+      ctx.setLineDash([]);
+    }
+    for (const n of state.buildings) {
+      if (!isGridNode(config, n.kind)) continue;
+      let color = cssVar('--wire-point');
+      if (start) {
+        if (n.id === start.id) color = cssVar('--accent');
+        else color = canWire(state, config, start.id, n.id) === null ? cssVar('--good') : 'rgba(128,128,128,0.6)';
+      }
+      ring(ctx, ...center(n), px * 0.42, color);
+    }
+    if (start && hover) {
+      const target = state.buildings.find((b) => b.x === hover.x && b.y === hover.y && isGridNode(config, b.kind));
+      if (target && target.id !== start.id) {
+        const ok = canWire(state, config, start.id, target.id) === null;
+        ctx.strokeStyle = ok ? cssVar('--good') : cssVar('--bad');
+        ctx.lineWidth = 3;
+        ctx.setLineDash([8, 5]);
+        ctx.beginPath();
+        ctx.moveTo(...center(start));
+        ctx.lineTo(...center(target));
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+    }
+  }
+
   // Selection
   if (selected) {
     ctx.strokeStyle = cssVar('--accent');
@@ -214,16 +264,20 @@ export function drawMap(canvas: HTMLCanvasElement, state: GameState, view: MapVi
   if (hover) {
     const hx = hover.x * px;
     const hy = hover.y * px;
-    if (tool) {
+    if (tool && tool !== 'wire') {
       const ok = canBuild(state, config, tool, hover.x, hover.y) === null;
-      if (isGridNode(config, tool)) drawGridPreview(ctx, state, tool, hover, px, ok);
+      if (isGridNode(config, tool)) drawSupplyPreview(ctx, tool, hover, px);
+      if (tool === 'pole' && ok && lastPoleId !== null) {
+        const last = findBuilding(state, lastPoleId);
+        if (last) drawChainPreview(ctx, state, last, hover, px);
+      }
       ctx.fillStyle = ok ? 'rgba(60, 180, 90, 0.45)' : 'rgba(220, 50, 50, 0.45)';
       ctx.fillRect(hx, hy, px, px);
       ctx.globalAlpha = 0.6;
-      if (tool === 'pole') drawPole(ctx, hx, hy, px);
+      if (tool === 'pole') drawPole(ctx, hx, hy, px, null);
       else ctx.fillText(BUILDING_ICONS[tool], hx + px / 2, hy + px / 2 + 1);
       ctx.globalAlpha = 1;
-    } else {
+    } else if (!tool) {
       ctx.strokeStyle = cssVar('--text');
       ctx.lineWidth = 2;
       ctx.strokeRect(hx + 1, hy + 1, px - 2, px - 2);
@@ -231,43 +285,59 @@ export function drawMap(canvas: HTMLCanvasElement, state: GameState, view: MapVi
   }
 }
 
+function ring(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number, color: string): void {
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.stroke();
+}
+
 /** A pole: a small post with a cross-arm, drawn without a tile background so wires stay visible. */
-function drawPole(ctx: CanvasRenderingContext2D, x: number, y: number, px: number): void {
+function drawPole(ctx: CanvasRenderingContext2D, x: number, y: number, px: number, cap: string | null): void {
   ctx.fillStyle = cssVar('--pole');
   ctx.fillRect(x + px * 0.44, y + px * 0.2, px * 0.12, px * 0.62);
   ctx.fillRect(x + px * 0.26, y + px * 0.26, px * 0.48, px * 0.1);
   ctx.beginPath();
   ctx.arc(x + px / 2, y + px / 2, px * 0.12, 0, Math.PI * 2);
+  ctx.fillStyle = cap ?? cssVar('--pole');
   ctx.fill();
 }
 
-/** Supply area, link area and future wires of a grid node being placed. */
-function drawGridPreview(
+/** Supply area of a grid node being placed. */
+function drawSupplyPreview(
   ctx: CanvasRenderingContext2D,
-  state: GameState,
   kind: GridNodeKind,
   at: { x: number; y: number },
   px: number,
-  ok: boolean,
 ): void {
-  const { link, supply } = config.grid[kind];
-  const square = (r: number) => [(at.x - r) * px, (at.y - r) * px, (2 * r + 1) * px, (2 * r + 1) * px] as const;
+  const r = config.grid[kind].supply;
+  const rect = [(at.x - r) * px, (at.y - r) * px, (2 * r + 1) * px, (2 * r + 1) * px] as const;
   ctx.fillStyle = cssVar('--coverage-preview');
-  ctx.fillRect(...square(supply));
-  ctx.strokeStyle = cssVar('--wire');
+  ctx.fillRect(...rect);
+  ctx.strokeStyle = cssVar('--wire-reach');
   ctx.lineWidth = 2;
-  ctx.strokeRect(...square(supply));
-  ctx.setLineDash([6, 4]);
-  ctx.lineWidth = 1.5;
-  ctx.strokeRect(...square(link));
-  if (ok) {
-    ctx.lineWidth = 2;
-    for (const n of linksFor(state, config, kind, at.x, at.y)) {
-      ctx.beginPath();
-      ctx.moveTo(at.x * px + px / 2, at.y * px + px / 2);
-      ctx.lineTo(n.x * px + px / 2, n.y * px + px / 2);
-      ctx.stroke();
-    }
-  }
+  ctx.strokeRect(...rect);
+}
+
+/** Dashed wire to the previously placed pole, green when chaining will work. */
+function drawChainPreview(
+  ctx: CanvasRenderingContext2D,
+  state: GameState,
+  last: Building,
+  at: { x: number; y: number },
+  px: number,
+): void {
+  const length = tileDistance(last, at);
+  const ok =
+    length <= config.wire.maxLength &&
+    state.material >= config.buildings.pole.cost + wireCost(config, length);
+  ctx.strokeStyle = ok ? cssVar('--good') : cssVar('--bad');
+  ctx.lineWidth = 2.5;
+  ctx.setLineDash([8, 5]);
+  ctx.beginPath();
+  ctx.moveTo(last.x * px + px / 2, last.y * px + px / 2);
+  ctx.lineTo(at.x * px + px / 2, at.y * px + px / 2);
+  ctx.stroke();
   ctx.setLineDash([]);
 }

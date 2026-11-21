@@ -62,24 +62,50 @@ Vítr kolísá v čase mezi 0,3 a 1,2 (sinus + šum), aktuální hodnota je vid�
 
 ## Elektrická síť (fáze 2b)
 Energie se nepřenáší vzduchem. Stroj běží jen tehdy, když je připojený
-k síti, do které dodává nějaká elektrárna nebo větrník.
+k síti, do které dodává nějaká elektrárna nebo větrník. Kudy síť vede,
+určuje hráč.
 
-- Nová stavba Sloup: cena 2 materiály, nežere energii.
-- Sloup se propojí s jinými sloupy do vzdálenosti 4 polí a napájí
-  stavby do vzdálenosti 2 polí.
-- Uhelná elektrárna a větrník se chovají jako sloup s dosahem 1
-  (stroj hned vedle elektrárny funguje bez sloupu).
-- Databanka se chová jako sloup s dosahem 2. Rozmrazování bere energii
-  ze sítě, ke které je připojená.
-- Propojené sloupy tvoří síť. Každá síť má vlastní výrobu, spotřebu
-  a vlastní poměrný výkon při nedostatku. Sítí může být na mapě víc.
-- Stroj mimo síť neběží a má ikonu "není připojeno".
-- Sloup se počítá jako stroj: podmínka výhry platí až po rozebrání
-  všech sloupů. Rozebrání vrací 50 % ceny.
+### Sloup
+- Cena 2 materiály, nežere energii.
+- Napájí stavby do vzdálenosti 2 polí. To je automatické, ke strojům
+  se dráty netahají.
+- Sloupy se mezi sebou samy NEPROPOJUJÍ.
 
-UI:
-- Mezi propojenými sloupy je na mapě vidět čára.
-- Při stavění sloupu je vidět jeho dosah a na které sloupy se napojí.
+### Drát
+- Drát vede hráč ručně mezi dvěma přípojnými body: nástroj Drát,
+  klik na první bod, klik na druhý bod.
+- Přípojné body jsou sloup, uhelná elektrárna, větrník a Databanka.
+- Největší délka drátu je 5 polí.
+- Cena 1 materiál za každé pole délky. Rozebrání vrací 50 %.
+- Drát se dá rozebrat samostatně (klik na drát). Když se rozebere
+  sloup nebo elektrárna, rozeberou se i jejich dráty a materiál
+  se vrátí.
+- Řetězení: když hráč staví sloupy za sebou, nový sloup se propojí
+  drátem s naposledy postaveným sloupem, pokud je v dosahu a hráč
+  má materiál. Řetězení se přeruší výběrem jiného nástroje nebo Esc.
+
+### Elektrárny a Databanka
+- Uhelná elektrárna a větrník napájejí stavby do vzdálenosti 1 pole
+  (stroj hned vedle elektrárny funguje bez sloupu). Do sítě dodávají
+  jen přes drát.
+- Databanka napájí stavby do vzdálenosti 2 polí. Rozmrazování bere
+  energii ze sítě, ke které je připojená drátem.
+
+### Sítě
+- Síť tvoří všechno, co je spojené dráty. Každá síť má vlastní výrobu,
+  spotřebu a vlastní poměrný výkon při nedostatku. Sítí může být víc
+  a hráč je může držet záměrně oddělené.
+- Stroj mimo dosah napájené sítě neběží a má ikonu "není připojeno".
+- Sloupy i dráty se počítají jako stroje: podmínka výhry platí až po
+  rozebrání všech sloupů a drátů.
+
+### UI
+- Dráty jsou na mapě vidět jako čáry.
+- Při vedení drátu je vidět, na které body se dá z vybraného bodu
+  dosáhnout, a cena drátu.
+- Při stavění sloupu je vidět jeho dosah napájení.
+- Každá síť má na mapě vlastní barvu drátů, aby bylo poznat, co je
+  spojené.
 - Horní lišta ukazuje součet výroby a spotřeby všech sítí a počet
   nepřipojených strojů.
 - Tooltip stavby ukazuje výrobu, spotřebu a výkon její sítě.

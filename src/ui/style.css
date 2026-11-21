@@ -16,7 +16,9 @@
   --building-bg: rgba(255, 255, 255, 0.75);
   --tooltip-bg: #1f2a24;
   --bad: #c0392b;
-  --wire: #2b2b2b;
+  --wire-reach: #2b2b2b;
+  --wire-point: rgba(40, 40, 40, 0.55);
+  --good: #2e9d4f;
   --pole: #4a3420;
   --coverage: rgba(255, 230, 120, 0.28);
   --coverage-preview: rgba(255, 220, 80, 0.25);
@@ -42,7 +44,9 @@
     --building-bg: rgba(230, 235, 231, 0.8);
     --tooltip-bg: #e6ebe7;
     --bad: #ff6b5e;
-    --wire: #f0e6c8;
+    --wire-reach: #f0e6c8;
+    --wire-point: rgba(240, 230, 200, 0.6);
+    --good: #5fd38a;
     --pole: #d9c29a;
     --coverage: rgba(255, 230, 120, 0.18);
     --coverage-preview: rgba(255, 220, 80, 0.18);

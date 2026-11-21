@@ -78,15 +78,21 @@ export const config = {
   /**
    * Electric grid (phase 2b). Distances are in tiles, measured as a square
    * around the building (diagonal neighbours count as distance 1).
-   * link: two grid nodes join when their distance is within the larger
-   *       link range of the two.
-   * supply: machines within this distance of a node are powered by it.
+   * supply: machines within this distance of a grid node are powered by it.
+   * Grid nodes connect to each other only through wires laid by the player.
    */
   grid: {
-    pole: { link: 4, supply: 2 },
-    coalPlant: { link: 1, supply: 1 },
-    windmill: { link: 1, supply: 1 },
-    databank: { link: 2, supply: 2 },
+    pole: { supply: 2 },
+    coalPlant: { supply: 1 },
+    windmill: { supply: 1 },
+    databank: { supply: 2 },
+  },
+
+  wire: {
+    /** Longest wire in tiles. */
+    maxLength: 5,
+    /** Material per tile of wire length. */
+    costPerTile: 1,
   },
 
   /** Share of the cost returned when a building is demolished. */

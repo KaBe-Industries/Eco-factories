@@ -3,7 +3,7 @@ import { generateMap } from './map';
 import { windAt } from './wind';
 import type { Building, BuildingKind, GameState, Inventory, Tile } from './types';
 
-export const STATE_VERSION = 2;
+export const STATE_VERSION = 3;
 
 export function emptyInventory(): Inventory {
   return { input: {}, output: {} };
@@ -58,6 +58,8 @@ export function createInitialState(config: Config): GameState {
     tiles: map.tiles,
     buildings: map.buildings,
     nextBuildingId: map.nextBuildingId,
+    wires: [],
+    nextWireId: 1,
     material: config.start.material,
     wind: windAt(config, 0, 0),
     windNoise: 0,

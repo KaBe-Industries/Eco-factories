@@ -85,6 +85,14 @@ export interface Building {
   power: number;
 }
 
+/** A wire laid by the player between two grid nodes (phase 2b). */
+export interface Wire {
+  id: number;
+  /** Building ids of the two ends. */
+  a: number;
+  b: number;
+}
+
 export type SpeciesId = 'fungi' | 'plants' | 'bees';
 
 export type FloorStatus = 'locked' | 'unlocked' | 'thawing' | 'ready';
@@ -142,6 +150,8 @@ export interface GameState {
   tiles: Tile[];
   buildings: Building[];
   nextBuildingId: number;
+  wires: Wire[];
+  nextWireId: number;
 
   material: number;
   /** Current wind multiplier for windmills. */
@@ -165,7 +175,17 @@ export interface GameState {
 
 /** Player actions. The UI never edits the state directly; it sends commands. */
 export type Command =
-  | { type: 'build'; kind: BuildingKind; x: number; y: number; direction?: Direction }
+  | {
+      type: 'build';
+      kind: BuildingKind;
+      x: number;
+      y: number;
+      direction?: Direction;
+      /** Chaining: also lay a wire from the new building to this one, if possible. */
+      wireTo?: number;
+    }
+  | { type: 'wire'; from: number; to: number }
+  | { type: 'removeWire'; wireId: number }
   | { type: 'toggle'; buildingId: number }
   | { type: 'demolish'; buildingId: number }
   | { type: 'dismantleRuin'; x: number; y: number }

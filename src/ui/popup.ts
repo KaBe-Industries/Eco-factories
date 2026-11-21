@@ -1,10 +1,14 @@
 import { config } from '../config';
-import { energyOutputOf, energyUseOf, findBuilding, isBuildable, refundFor } from '../sim';
+import { energyOutputOf, energyUseOf, findBuilding, isBuildable, refundFor, tileDistance, wireEnds, wireRefund } from '../sim';
 import type { GameState } from '../sim';
 import { BUILDING_ICONS, BUILDING_LABELS, fmt } from './labels';
 import { networkLine, powerStatus } from './power';
 
-export type Selection = { type: 'building'; id: number } | { type: 'ruin'; x: number; y: number } | null;
+export type Selection =
+  | { type: 'building'; id: number }
+  | { type: 'ruin'; x: number; y: number }
+  | { type: 'wire'; id: number }
+  | null;
 
 /**
  * HTML for the small panel next to a selected building or ruin.
@@ -22,6 +26,15 @@ export function popupHtml(state: GameState, sel: Selection): string | null {
         : `<p>Rozebírá se: ${t.dismantleProgress} / ${config.ruins.dismantleTicks} ticků.</p>`;
     return `<div class="popup-head"><b>🏚️ Ruina</b><button class="close" data-action="close">✕</button></div>${body}`;
   }
+  if (sel.type === 'wire') {
+    const w = state.wires.find((o) => o.id === sel.id);
+    const ends = w && wireEnds(state, w);
+    if (!w || !ends) return null;
+    const length = tileDistance(ends[0], ends[1]);
+    return `<div class="popup-head"><b>〰️ Drát</b><button class="close" data-action="close">✕</button></div>
+      <p>Délka ${length} ${length === 1 ? 'pole' : length < 5 ? 'pole' : 'polí'}, spojuje ${BUILDING_LABELS[ends[0].kind].toLowerCase()} a ${BUILDING_LABELS[ends[1].kind].toLowerCase()}.</p>
+      <button data-action="removeWire">🔨 Rozebrat drát (+${wireRefund(config, length)} 🧱)</button>`;
+  }
   const b = findBuilding(state, sel.id);
   if (!b) return null;
   const head = `<div class="popup-head"><b>${BUILDING_ICONS[b.kind]} ${BUILDING_LABELS[b.kind]}</b><button class="close" data-action="close">✕</button></div>`;
@@ -36,6 +49,10 @@ export function popupHtml(state: GameState, sel: Selection): string | null {
   if (net) lines.push(`<span class="muted">${net}</span>`);
   if (!isBuildable(config, b.kind)) {
     return `${head}<p>${[...lines, 'Tuhle stavbu nejde vypnout ani zbourat.'].join('<br>')}</p>`;
+  }
+  const wires = state.wires.filter((w) => w.a === b.id || w.b === b.id);
+  if (wires.length > 0) {
+    lines.push(`<span class="muted">Rozebráním se rozeberou i ${wires.length === 1 ? 'jeho drát' : `jeho dráty (${wires.length})`}.</span>`);
   }
   return `${head}
     <p>${lines.join('<br>')}</p>

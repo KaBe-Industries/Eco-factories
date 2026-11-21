@@ -1,4 +1,5 @@
-import type { BuildBlockReason, BuildableKind, BuildingKind, TileKind } from '../sim';
+import { config } from '../config';
+import type { BuildBlockReason, BuildableKind, BuildingKind, TileKind, WireBlockReason } from '../sim';
 
 export const TILE_LABELS: Record<TileKind, string> = {
   soil: 'Půda',
@@ -43,7 +44,7 @@ export const BUILDING_DESCRIPTIONS: Record<BuildableKind, string> = {
   irrigator: 'Zvyšuje vlhkost půdy v okruhu 2.',
   filterStation: 'Čistí řeku. Jen na břehu řeky.',
   pollenSprayer: 'Opyluje rostliny v okruhu 3.',
-  pole: 'Vede energii. Spojí se se sloupy do 4 polí, napájí stavby do 2 polí.',
+  pole: 'Napájí stavby do 2 polí. S dalšími body ho spoj drátem.',
 };
 
 export const BUILD_BLOCK_LABELS: Record<BuildBlockReason, string> = {
@@ -66,3 +67,12 @@ export function plural(n: number, one: string, few: string, many: string): strin
   if (n >= 2 && n <= 4) return few;
   return many;
 }
+
+export const WIRE_BLOCK_LABELS: Record<WireBlockReason, string> = {
+  missing: 'Tahle stavba už neexistuje.',
+  notNode: 'Drát jde vést jen mezi sloupem, elektrárnou, větrníkem a Databankou.',
+  same: 'Drát musí vést mezi dvěma různými body.',
+  exists: 'Tyhle dva body už drát spojuje.',
+  tooLong: `Drát je moc dlouhý (max. ${config.wire.maxLength} polí).`,
+  noMaterial: 'Nedostatek materiálu na drát.',
+};
