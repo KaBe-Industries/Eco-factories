@@ -8,6 +8,11 @@ aspoň jednou podlehl?
 Prototyp je hratelný v prohlížeči, jedna mapa, jedno sezení na 20 až 40 minut.
 Žádná grafika: barevné čtverce, jednoduché ikony nebo emoji, čitelné UI.
 
+Pásy a automatizace jsou jádrem cílové hry. Fáze 0 až 7 ověřují
+ekologickou půlku (nahrazování strojů živými druhy), fáze 8 přidává
+logistiku. Teprve verze po fázi 8 testuje celou hru: baví mě postavit
+fabriku s pásy a pak ji postupně strhnout?
+
 ## Technologie
 - Vite + TypeScript, bez frameworku, HTML Canvas 2D na mapu, obyčejné HTML/CSS na panely.
 - Simulace je úplně oddělená od vykreslování: čistá funkce `step(state, config) -> state`,
@@ -19,6 +24,10 @@ Prototyp je hratelný v prohlížeči, jedna mapa, jedno sezení na 20 až 40 mi
 - Deploy na GitHub Pages přes GitHub Action, aby šlo poslat odkaz partě.
 - README: jak to spustit lokálně (npm install, npm run dev) pro člověka,
   který neumí programovat.
+- Stav hry musí od začátku počítat s logistikou z fáze 8: každá stavba
+  má vnitřní zásobník (vstup a výstup) a pole mapy může nést předmět.
+  Ve fázích 0 až 7 se to nepoužívá, ale datový model je na to připravený,
+  aby se ve fázi 8 nepřepisoval základ.
 
 ## Mapa
 - Mřížka 24 × 16 polí, generovaná ze seedu (seed v configu, stejný seed = stejná mapa).
@@ -117,6 +126,56 @@ Vysazení druhu stojí 5 materiálu za pole. Šíření pak probíhá samo.
 - Uložení hry do localStorage (obalené v try/catch, když selže, hra jede dál).
 - Skrytý debug panel (klávesa D): všechny globální hodnoty a tlačítko "přeskoč 100 ticků".
 
+## Logistika: pásy (fáze 8)
+
+### Pás
+- Cena 1 materiál za pole, nežere energii, má směr.
+- Nese nejvýš jeden předmět na pole, posun o 1 pole za tick.
+- Staví se tažením myši, směr podle tahu. Klávesa R otáčí.
+- Pás, který ústí z boku do jiného pásu, se do něj vlévá.
+  Žádné rozdělovače, žádné křížení, žádné podzemní pásy.
+- Stavba vykládá výstup na sousední pás, který vede od ní.
+  Pás, který končí u stavby, do ní předmět doručí, pokud ho stavba bere
+  a má místo v zásobníku. Jinak pás stojí.
+- Rozebrání vrací 50 % ceny, předměty na pásu zmizí.
+
+### Předměty (2)
+- **Uhlí**
+- **Toxický kal**
+
+### Tok 1: uhlí do elektrárny
+- Na mapě jsou 2 uhelné skládky po předchozí civilizaci (generované
+  ze seedu, nedají se zbourat, zásoba je nekonečná).
+- Skládka vydá 1 uhlí za 4 ticky na sousední pás.
+- Uhelná elektrárna spálí 1 uhlí za 5 ticků. Zásobník 10 kusů,
+  po postavení je plný. Bez uhlí má výkon 0.
+- Špinavá energie je tak pořád levná na stavbu, ale chce logistiku.
+
+### Tok 2: kal z čističek
+- Čistička půdy vyrobí 1 kal za každých 10 ticků práce. Zásobník 5 kusů.
+  Když je plný, čistička stojí.
+- Nová stavba Zpracovna kalu: cena 25 materiálu, 2 energie,
+  zpracuje 1 kal za 3 ticky, za každé 2 kusy kalu vrátí 1 materiál.
+- Houby kal neprodukují. Jakmile převezmou čištění půdy, čističky,
+  pásy na kal i zpracovna jdou rozebrat.
+
+### Dopad na výhru a soběstačnost
+- Pásy, skládkové linky a zpracovna se počítají jako stroje.
+  Podmínka výhry platí až po rozebrání všech pásů.
+- Horní lišta ukazuje počet zbývajících strojů a polí pásů.
+
+### UI
+- Předměty na pásech jsou vidět (malé barevné čtverečky).
+- Tooltip stavby ukazuje stav zásobníku a důvod, proč stojí
+  ("chybí uhlí", "plný zásobník kalu").
+- Duch včely dostane dva nové texty: první postavený pás a první
+  stržený pás.
+
+### Balanční test po fázi 8
+- Boti Čistá, Půjčka a Závislák se rozšíří o stavění pásů.
+- Cílový stav balancu zůstává stejný jako ve fázi 7.
+- Navíc skript vypíše pro každého bota nejvyšší počet polí pásů během hry.
+
 ## Balanční test (povinný)
 Napiš headless skript `npm run balance`, který bez UI odehraje tři
 jednoduché strategie (skriptované boty) a vypíše, za kolik ticků vyhrály
@@ -144,7 +203,10 @@ Po každé fázi se zastav, shrň, co je hotové, a jak to vyzkoušet.
 5. Znečištění, kolapsy, duch včely.
 6. Soběstačnost, výhra, ukládání.
 7. Balanční skript a ladění čísel.
+8. Logistika: pásy, uhlí ze skládek, kal z čističek, zpracovna kalu,
+   rozšíření botů a nové ladění čísel.
 
 ## Mimo rozsah
-Cestování mezi biomy, blueprinty, technologický strom, příběh nad rámec
+Cestování mezi biomy, blueprinty (přijdou až s druhým biomem),
+rozdělovače a křížení pásů, technologický strom, příběh nad rámec
 jednoho ducha, zvuk, grafika, mobilní ovládání, býložravci a predátoři.
