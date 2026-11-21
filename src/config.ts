@@ -8,13 +8,51 @@ export const config = {
     seed: 20261121,
     width: 24,
     height: 16,
+    river: {
+      /** Rows between the map edge and the river's base line. */
+      offsetFromEdge: 3,
+      minWidth: 2,
+      maxWidth: 3,
+      /** Chance per column that the river width changes. */
+      widthChangeChance: 0.3,
+      /** Vertical wiggle (tiles) and its frequency (radians per column). */
+      wiggleAmplitude: 1.5,
+      wiggleFrequency: 0.45,
+    },
+    hills: {
+      clusters: 3,
+      /** Extra hill tiles grown around each cluster centre. */
+      extraTilesPerCluster: 4,
+    },
+    ruins: {
+      count: 10,
+    },
+    /** Keep hills and ruins at least this far (tiles) from the Databank. */
+    databankClearance: 2,
+    toxicity: {
+      soilMin: 50,
+      soilMax: 90,
+      ruinMin: 85,
+      ruinMax: 100,
+    },
+    moisture: {
+      /** Moisture on a tile right next to the river. */
+      atRiver: 85,
+      /** Moisture lost per tile of distance from the river. */
+      lossPerTile: 7,
+      min: 10,
+      /** Random variation ± this value. */
+      jitter: 5,
+      /** Moisture value stored on river tiles themselves. */
+      riverTile: 100,
+    },
   },
 
   time: {
     /** Real milliseconds per tick at speed 1×. */
     msPerTick: 1000,
     /** Available speed multipliers (0 = paused). */
-    speeds: [0, 1, 3] as const,
+    speeds: [0, 1, 3],
   },
 
   start: {
@@ -32,6 +70,6 @@ export const config = {
   ui: {
     tilePx: 36,
   },
-} as const;
+};
 
 export type Config = typeof config;

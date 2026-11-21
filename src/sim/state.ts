@@ -1,4 +1,5 @@
 import type { Config } from '../config';
+import { generateMap } from './map';
 import type { Building, BuildingKind, GameState, Inventory, Tile } from './types';
 
 export const STATE_VERSION = 1;
@@ -40,23 +41,20 @@ export function makeBuilding(id: number, kind: BuildingKind, x: number, y: numbe
   };
 }
 
-/**
- * Creates a fresh game. In phase 0 the map is a blank field;
- * seeded map generation arrives in phase 1.
- */
+/** Creates a fresh game with a map generated from the seed in config. */
 export function createInitialState(config: Config): GameState {
   const { width, height, seed } = config.map;
-  const tiles: Tile[] = Array.from({ length: width * height }, emptyTile);
+  const map = generateMap(config);
   return {
     version: STATE_VERSION,
     seed,
-    rng: seed,
+    rng: map.rng,
     tick: 0,
     width,
     height,
-    tiles,
-    buildings: [],
-    nextBuildingId: 1,
+    tiles: map.tiles,
+    buildings: map.buildings,
+    nextBuildingId: map.nextBuildingId,
     material: config.start.material,
     wind: 0,
     riverQuality: config.start.riverQuality,
