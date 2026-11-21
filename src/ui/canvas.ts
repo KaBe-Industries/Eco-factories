@@ -1,6 +1,6 @@
 import { config } from '../config';
-import { canBuild, energyUseOf } from '../sim';
-import type { BuildableKind, GameState, TileKind } from '../sim';
+import { canBuild, gridLinks, isConsumer, isGridNode, linksFor, supplierFor } from '../sim';
+import type { BuildableKind, GameState, GridNodeKind, TileKind } from '../sim';
 import { BUILDING_ICONS } from './labels';
 import { OVERLAYS, rampColor, type OverlayMode } from './overlay';
 
@@ -150,6 +150,29 @@ export function drawMap(canvas: HTMLCanvasElement, state: GameState, view: MapVi
   }
   ctx.globalAlpha = 1;
 
+  const center = (b: { x: number; y: number }): [number, number] => [b.x * px + px / 2, b.y * px + px / 2];
+
+  // Power coverage while placing a building: tiles some grid node reaches
+  if (tool) {
+    ctx.fillStyle = cssVar('--coverage');
+    for (let ty = 0; ty < state.height; ty++) {
+      for (let tx = 0; tx < state.width; tx++) {
+        if (state.tiles[ty * state.width + tx].kind === 'river') continue;
+        if (supplierFor(state, config, tx, ty)) ctx.fillRect(tx * px, ty * px, px, px);
+      }
+    }
+  }
+
+  // Power lines between connected grid nodes
+  ctx.strokeStyle = cssVar('--wire');
+  ctx.lineWidth = 2;
+  for (const [a, b] of gridLinks(state, config)) {
+    ctx.beginPath();
+    ctx.moveTo(...center(a));
+    ctx.lineTo(...center(b));
+    ctx.stroke();
+  }
+
   // Buildings
   ctx.font = `${Math.round(px * 0.7)}px system-ui, "Apple Color Emoji", "Segoe UI Emoji", sans-serif`;
   const smallFont = `${Math.round(px * 0.32)}px system-ui, "Apple Color Emoji", "Segoe UI Emoji", sans-serif`;
@@ -157,16 +180,24 @@ export function drawMap(canvas: HTMLCanvasElement, state: GameState, view: MapVi
   for (const b of state.buildings) {
     const x = b.x * px;
     const y = b.y * px;
-    ctx.fillStyle = cssVar('--building-bg');
-    ctx.fillRect(x + 2, y + 2, px - 4, px - 4);
     ctx.globalAlpha = b.enabled ? 1 : 0.35;
-    ctx.font = iconFont;
-    ctx.fillText(BUILDING_ICONS[b.kind], x + px / 2, y + px / 2 + 1);
+    if (b.kind === 'pole') {
+      drawPole(ctx, x, y, px);
+    } else {
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = cssVar('--building-bg');
+      ctx.fillRect(x + 2, y + 2, px - 4, px - 4);
+      ctx.globalAlpha = b.enabled ? 1 : 0.35;
+      ctx.font = iconFont;
+      ctx.fillText(BUILDING_ICONS[b.kind], x + px / 2, y + px / 2 + 1);
+    }
     ctx.globalAlpha = 1;
     ctx.font = smallFont;
     if (!b.enabled) {
       ctx.fillText('⏸', x + px - 8, y + 9);
-    } else if (state.energy.ratio < 1 && energyUseOf(config, b) > 0) {
+    } else if (isConsumer(config, b.kind) && b.networkId === null) {
+      ctx.fillText('🔌', x + px - 8, y + 9);
+    } else if (isConsumer(config, b.kind) && b.power < 1) {
       ctx.fillText('🪫', x + px - 8, y + 9);
     }
   }
@@ -185,10 +216,12 @@ export function drawMap(canvas: HTMLCanvasElement, state: GameState, view: MapVi
     const hy = hover.y * px;
     if (tool) {
       const ok = canBuild(state, config, tool, hover.x, hover.y) === null;
+      if (isGridNode(config, tool)) drawGridPreview(ctx, state, tool, hover, px, ok);
       ctx.fillStyle = ok ? 'rgba(60, 180, 90, 0.45)' : 'rgba(220, 50, 50, 0.45)';
       ctx.fillRect(hx, hy, px, px);
       ctx.globalAlpha = 0.6;
-      ctx.fillText(BUILDING_ICONS[tool], hx + px / 2, hy + px / 2 + 1);
+      if (tool === 'pole') drawPole(ctx, hx, hy, px);
+      else ctx.fillText(BUILDING_ICONS[tool], hx + px / 2, hy + px / 2 + 1);
       ctx.globalAlpha = 1;
     } else {
       ctx.strokeStyle = cssVar('--text');
@@ -196,4 +229,45 @@ export function drawMap(canvas: HTMLCanvasElement, state: GameState, view: MapVi
       ctx.strokeRect(hx + 1, hy + 1, px - 2, px - 2);
     }
   }
+}
+
+/** A pole: a small post with a cross-arm, drawn without a tile background so wires stay visible. */
+function drawPole(ctx: CanvasRenderingContext2D, x: number, y: number, px: number): void {
+  ctx.fillStyle = cssVar('--pole');
+  ctx.fillRect(x + px * 0.44, y + px * 0.2, px * 0.12, px * 0.62);
+  ctx.fillRect(x + px * 0.26, y + px * 0.26, px * 0.48, px * 0.1);
+  ctx.beginPath();
+  ctx.arc(x + px / 2, y + px / 2, px * 0.12, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+/** Supply area, link area and future wires of a grid node being placed. */
+function drawGridPreview(
+  ctx: CanvasRenderingContext2D,
+  state: GameState,
+  kind: GridNodeKind,
+  at: { x: number; y: number },
+  px: number,
+  ok: boolean,
+): void {
+  const { link, supply } = config.grid[kind];
+  const square = (r: number) => [(at.x - r) * px, (at.y - r) * px, (2 * r + 1) * px, (2 * r + 1) * px] as const;
+  ctx.fillStyle = cssVar('--coverage-preview');
+  ctx.fillRect(...square(supply));
+  ctx.strokeStyle = cssVar('--wire');
+  ctx.lineWidth = 2;
+  ctx.strokeRect(...square(supply));
+  ctx.setLineDash([6, 4]);
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(...square(link));
+  if (ok) {
+    ctx.lineWidth = 2;
+    for (const n of linksFor(state, config, kind, at.x, at.y)) {
+      ctx.beginPath();
+      ctx.moveTo(at.x * px + px / 2, at.y * px + px / 2);
+      ctx.lineTo(n.x * px + px / 2, n.y * px + px / 2);
+      ctx.stroke();
+    }
+  }
+  ctx.setLineDash([]);
 }

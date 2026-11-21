@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { config } from '../src/config';
 import { applyCommand, canBuild, step, stepMany } from '../src/sim';
 import type { GameState } from '../src/sim';
-import { bank, fresh, hill, river, ruin, soil } from './helpers';
+import { bank, blank, fresh, river, ruin, soil } from './helpers';
 
 const build = (s: GameState, kind: any, p: { x: number; y: number }) =>
   applyCommand(s, config, { type: 'build', kind, x: p.x, y: p.y });
@@ -56,46 +56,51 @@ describe('building', () => {
 });
 
 describe('energy', () => {
-  it('coal plant covers machines; ratio 1', () => {
-    let s = { ...fresh(), material: 1000 };
-    s = build(s, 'coalPlant', soil(s));
-    s = build(s, 'soilCleaner', soil(s));
-    s = build(s, 'irrigator', soil(s));
+  it('coal plant powers machines right next to it', () => {
+    let s = blank();
+    s = build(s, 'coalPlant', { x: 2, y: 2 });
+    s = build(s, 'soilCleaner', { x: 3, y: 2 });
+    s = build(s, 'irrigator', { x: 3, y: 3 }); // diagonal neighbour counts
     s = step(s, config);
     expect(s.energy.produced).toBe(config.buildings.coalPlant.energyOutput);
     expect(s.energy.demanded).toBe(config.buildings.soilCleaner.energyUse + config.buildings.irrigator.energyUse);
-    expect(s.energy.ratio).toBe(1);
+    expect(s.energy.networks).toHaveLength(1);
+    expect(s.energy.networks[0].ratio).toBe(1);
+    expect(s.buildings.every((b) => b.power === 1)).toBe(true);
   });
 
   it('shortage gives a proportional ratio', () => {
-    let s = { ...fresh(), material: 1000 };
-    s = build(s, 'coalPlant', soil(s)); // 10
-    for (let i = 0; i < 4; i++) s = build(s, 'filterStation', bank(s)); // 16
+    let s = blank();
+    s = build(s, 'coalPlant', { x: 2, y: 2 }); // 10
+    for (const p of [{ x: 1, y: 1 }, { x: 2, y: 1 }, { x: 3, y: 1 }, { x: 1, y: 2 }]) {
+      s = build(s, 'soilCleaner', p); // 4 × 3 = 12
+    }
     s = step(s, config);
-    expect(s.energy.ratio).toBeCloseTo(10 / 16);
+    expect(s.energy.networks[0].ratio).toBeCloseTo(10 / 12);
+    expect(s.buildings.find((b) => b.kind === 'soilCleaner')!.power).toBeCloseTo(10 / 12);
   });
 
   it('switched-off buildings neither produce nor consume', () => {
-    let s = { ...fresh(), material: 1000 };
-    s = build(s, 'coalPlant', soil(s));
-    s = build(s, 'soilCleaner', soil(s));
-    for (const b of s.buildings.filter((o) => o.kind !== 'databank')) {
-      s = applyCommand(s, config, { type: 'toggle', buildingId: b.id });
-    }
+    let s = blank();
+    s = build(s, 'coalPlant', { x: 2, y: 2 });
+    s = build(s, 'soilCleaner', { x: 3, y: 2 });
+    for (const b of s.buildings) s = applyCommand(s, config, { type: 'toggle', buildingId: b.id });
     s = step(s, config);
     expect(s.energy.produced).toBe(0);
     expect(s.energy.demanded).toBe(0);
-    expect(s.energy.ratio).toBe(1);
+    expect(s.energy.unconnected).toBe(0);
+    expect(s.buildings.every((b) => b.power === 0)).toBe(true);
   });
 
   it('windmill output follows wind and gets the hill bonus', () => {
-    let s = { ...fresh(), material: 1000 };
-    s = build(s, 'windmill', soil(s));
+    let s = blank();
+    s = build(s, 'windmill', { x: 2, y: 2 });
     s = step(s, config);
     expect(s.energy.produced).toBeCloseTo(config.buildings.windmill.energyOutput * s.wind);
 
-    let h = { ...fresh(), material: 1000 };
-    h = build(h, 'windmill', hill(h));
+    let h = blank();
+    h.tiles[2 * h.width + 2].kind = 'hill';
+    h = build(h, 'windmill', { x: 2, y: 2 });
     h = step(h, config);
     expect(h.energy.produced).toBeCloseTo(
       config.buildings.windmill.energyOutput * h.wind * config.windmillHillMultiplier,

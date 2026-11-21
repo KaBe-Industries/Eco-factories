@@ -25,3 +25,15 @@ export const bank = (s: GameState) => findTile(s, (k, x, y) => k === 'soil' && i
 export const hill = (s: GameState) => findTile(s, (k) => k === 'hill');
 export const ruin = (s: GameState) => findTile(s, (k) => k === 'ruin');
 export const river = (s: GameState) => findTile(s, (k) => k === 'river');
+
+/** A flat all-soil map with no buildings and plenty of material, for grid tests. */
+export function blank(): GameState {
+  const s = fresh();
+  for (const t of s.tiles) {
+    t.kind = 'soil';
+    t.buildingId = null;
+  }
+  s.buildings = [];
+  s.material = 10000;
+  return s;
+}

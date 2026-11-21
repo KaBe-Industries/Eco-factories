@@ -11,6 +11,7 @@ export function isBuildable(config: Config, kind: BuildingKind): kind is Buildab
 
 export const ENERGY_SOURCES: readonly BuildableKind[] = ['coalPlant', 'windmill'];
 export const MACHINES: readonly BuildableKind[] = ['soilCleaner', 'irrigator', 'filterStation', 'pollenSprayer'];
+export const GRID_BUILDINGS: readonly BuildableKind[] = ['pole'];
 
 /** Why a building can't be placed. null = it can. */
 export type BuildBlockReason =
@@ -57,28 +58,10 @@ export function energyOutputOf(state: GameState, config: Config, b: Building): n
   return base;
 }
 
-/** Energy a building needs this tick (0 when switched off). */
+/** Energy a building needs this tick at full power (0 when switched off). */
 export function energyUseOf(config: Config, b: Building): number {
   if (!b.enabled || !isBuildable(config, b.kind)) return 0;
   return config.buildings[b.kind].energyUse;
-}
-
-/**
- * Compares production and demand. Energy can't be stored: when demand is
- * higher, every consumer runs at the same reduced ratio.
- */
-export function updateEnergy(s: GameState, config: Config): void {
-  let produced = 0;
-  let demanded = 0;
-  for (const b of s.buildings) {
-    produced += energyOutputOf(s, config, b);
-    demanded += energyUseOf(config, b);
-  }
-  s.energy = {
-    produced,
-    demanded,
-    ratio: demanded <= 0 ? 1 : Math.min(1, produced / demanded),
-  };
 }
 
 /** Advances ruin dismantling; finished ruins turn into soil and give material. */

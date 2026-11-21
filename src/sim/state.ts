@@ -3,7 +3,7 @@ import { generateMap } from './map';
 import { windAt } from './wind';
 import type { Building, BuildingKind, GameState, Inventory, Tile } from './types';
 
-export const STATE_VERSION = 1;
+export const STATE_VERSION = 2;
 
 export function emptyInventory(): Inventory {
   return { input: {}, output: {} };
@@ -39,6 +39,8 @@ export function makeBuilding(id: number, kind: BuildingKind, x: number, y: numbe
     direction: 'E',
     inventory: emptyInventory(),
     progress: 0,
+    networkId: null,
+    power: 0,
   };
 }
 
@@ -62,7 +64,7 @@ export function createInitialState(config: Config): GameState {
     riverQuality: config.start.riverQuality,
     pollution: config.start.pollution,
     bees: 0,
-    energy: { produced: 0, demanded: 0, ratio: 1 },
+    energy: { produced: 0, demanded: 0, unconnected: 0, networks: [] },
     databank: [
       { species: 'fungi', status: 'locked', thawProgress: 0 },
       { species: 'plants', status: 'locked', thawProgress: 0 },

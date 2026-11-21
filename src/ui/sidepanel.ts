@@ -1,5 +1,5 @@
 import { config } from '../config';
-import { ENERGY_SOURCES, MACHINES } from '../sim';
+import { ENERGY_SOURCES, GRID_BUILDINGS, MACHINES } from '../sim';
 import type { BuildableKind, GameState } from '../sim';
 import { BUILDING_DESCRIPTIONS, BUILDING_ICONS, BUILDING_LABELS, fmt } from './labels';
 import { setHtml } from './dom';
@@ -11,7 +11,9 @@ function buildButton(state: GameState, kind: BuildableKind, tool: BuildableKind 
   const energy =
     c.energyOutput > 0
       ? `+${fmt(c.energyOutput)}${kind === 'windmill' ? ' × vítr' : ''} ⚡`
-      : `−${fmt(c.energyUse)} ⚡`;
+      : c.energyUse > 0
+        ? `−${fmt(c.energyUse)} ⚡`
+        : '0 ⚡';
   return `
     <button class="build ${tool === kind ? 'active' : ''}" data-build="${kind}" ${affordable ? '' : 'disabled'}>
       <span class="icon">${BUILDING_ICONS[kind]}</span>
@@ -35,6 +37,8 @@ export function renderSidepanel(
     `
     <h2>Energie</h2>
     <div class="build-list">${ENERGY_SOURCES.map((k) => buildButton(state, k, tool)).join('')}</div>
+    <h2>Síť</h2>
+    <div class="build-list">${GRID_BUILDINGS.map((k) => buildButton(state, k, tool)).join('')}</div>
     <h2>Stroje</h2>
     <div class="build-list">${MACHINES.map((k) => buildButton(state, k, tool)).join('')}</div>
     <p class="hint">${

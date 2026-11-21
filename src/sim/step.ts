@@ -1,5 +1,6 @@
 import type { Config } from '../config';
-import { updateEnergy, updateRuins } from './buildings';
+import { updateGrid } from './grid';
+import { updateRuins } from './buildings';
 import type { GameState } from './types';
 import { updateWind } from './wind';
 
@@ -12,7 +13,7 @@ export function step(state: GameState, config: Config): GameState {
   s.tick += 1;
   updateWind(s, config);
   updateRuins(s, config);
-  updateEnergy(s, config);
+  updateGrid(s, config);
   return s;
 }
 

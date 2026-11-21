@@ -60,6 +60,30 @@ fabriku s pásy a pak ji postupně strhnout?
 
 Vítr kolísá v čase mezi 0,3 a 1,2 (sinus + šum), aktuální hodnota je vidět v UI.
 
+## Elektrická síť (fáze 2b)
+Energie se nepřenáší vzduchem. Stroj běží jen tehdy, když je připojený
+k síti, do které dodává nějaká elektrárna nebo větrník.
+
+- Nová stavba Sloup: cena 2 materiály, nežere energii.
+- Sloup se propojí s jinými sloupy do vzdálenosti 4 polí a napájí
+  stavby do vzdálenosti 2 polí.
+- Uhelná elektrárna a větrník se chovají jako sloup s dosahem 1
+  (stroj hned vedle elektrárny funguje bez sloupu).
+- Databanka se chová jako sloup s dosahem 2. Rozmrazování bere energii
+  ze sítě, ke které je připojená.
+- Propojené sloupy tvoří síť. Každá síť má vlastní výrobu, spotřebu
+  a vlastní poměrný výkon při nedostatku. Sítí může být na mapě víc.
+- Stroj mimo síť neběží a má ikonu "není připojeno".
+- Sloup se počítá jako stroj: podmínka výhry platí až po rozebrání
+  všech sloupů. Rozebrání vrací 50 % ceny.
+
+UI:
+- Mezi propojenými sloupy je na mapě vidět čára.
+- Při stavění sloupu je vidět jeho dosah a na které sloupy se napojí.
+- Horní lišta ukazuje součet výroby a spotřeby všech sítí a počet
+  nepřipojených strojů.
+- Tooltip stavby ukazuje výrobu, spotřebu a výkon její sítě.
+
 ## Stroje (4)
 Každý stroj jde zapnout, vypnout a rozebrat. Vypnutý stroj nežere energii.
 
@@ -184,6 +208,8 @@ a kolik zažily kolapsů:
 2. **Půjčka**: uhlí na začátku, po odemčení patra 2 přechod na větrníky a zbourání uhlí.
 3. **Závislák**: uhlí pořád.
 
+Boti stavějí i sloupy.
+
 Cílový stav balancu:
 - Půjčka je nejrychlejší (aspoň o 15 % rychlejší než Čistá).
 - Čistá vyhraje, jen pomaleji.
@@ -198,6 +224,7 @@ Po každé fázi se zastav, shrň, co je hotové, a jak to vyzkoušet.
 0. Kostra projektu, Vite + TS, Vitest, GitHub Action pro Pages, README.
 1. Generování mapy ze seedu a vykreslení, tooltip pole, overlaye.
 2. Čas, materiál, energie, stavění a rozebírání, ruiny.
+2b. Elektrická síť: sloupy, sítě, napájení jen v dosahu.
 3. Simulace toxicity, vlhkosti a řeky, efekty strojů.
 4. Databanka, odemykání pater, rozmrazování, šíření druhů.
 5. Znečištění, kolapsy, duch včely.
@@ -209,4 +236,5 @@ Po každé fázi se zastav, shrň, co je hotové, a jak to vyzkoušet.
 ## Mimo rozsah
 Cestování mezi biomy, blueprinty (přijdou až s druhým biomem),
 rozdělovače a křížení pásů, technologický strom, příběh nad rámec
-jednoho ducha, zvuk, grafika, mobilní ovládání, býložravci a predátoři.
+jednoho ducha, zvuk, grafika, mobilní ovládání, býložravci a predátoři,
+kabely kreslené po polích, baterie.

@@ -2,6 +2,7 @@ import { config } from '../config';
 import { energyOutputOf, energyUseOf, findBuilding, isBuildable, refundFor } from '../sim';
 import type { GameState } from '../sim';
 import { BUILDING_ICONS, BUILDING_LABELS, fmt } from './labels';
+import { networkLine, powerStatus } from './power';
 
 export type Selection = { type: 'building'; id: number } | { type: 'ruin'; x: number; y: number } | null;
 
@@ -24,19 +25,20 @@ export function popupHtml(state: GameState, sel: Selection): string | null {
   const b = findBuilding(state, sel.id);
   if (!b) return null;
   const head = `<div class="popup-head"><b>${BUILDING_ICONS[b.kind]} ${BUILDING_LABELS[b.kind]}</b><button class="close" data-action="close">✕</button></div>`;
-  if (!isBuildable(config, b.kind)) {
-    return `${head}<p>Tuhle stavbu nejde vypnout ani zbourat.</p>`;
-  }
+  const lines: string[] = [];
   const out = energyOutputOf(state, config, b);
   const use = energyUseOf(config, b);
-  let status: string;
-  if (!b.enabled) status = 'Vypnuto – nežere energii.';
-  else if (out > 0) status = `Vyrábí ${fmt(out, 1)} ⚡`;
-  else if (use > 0 && state.energy.ratio < 1)
-    status = `<span class="warn">Jede na ${fmt(state.energy.ratio * 100)} % – málo energie.</span>`;
-  else status = `Běží, spotřeba ${fmt(use)} ⚡`;
+  if (out > 0) lines.push(`Vyrábí ${fmt(out, 1)} ⚡`);
+  if (use > 0) lines.push(`Spotřeba ${fmt(use)} ⚡`);
+  const status = powerStatus(b);
+  if (status) lines.push(status);
+  const net = networkLine(state, b);
+  if (net) lines.push(`<span class="muted">${net}</span>`);
+  if (!isBuildable(config, b.kind)) {
+    return `${head}<p>${[...lines, 'Tuhle stavbu nejde vypnout ani zbourat.'].join('<br>')}</p>`;
+  }
   return `${head}
-    <p>${status}</p>
+    <p>${lines.join('<br>')}</p>
     <div class="button-row">
       <button data-action="toggle">${b.enabled ? '⏸ Vypnout' : '▶ Zapnout'}</button>
       <button data-action="demolish">🔨 Rozebrat (+${refundFor(config, b.kind)} 🧱)</button>

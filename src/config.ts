@@ -72,6 +72,21 @@ export const config = {
     irrigator: { cost: 15, energyUse: 2, energyOutput: 0 },
     filterStation: { cost: 30, energyUse: 4, energyOutput: 0 },
     pollenSprayer: { cost: 20, energyUse: 2, energyOutput: 0 },
+    pole: { cost: 2, energyUse: 0, energyOutput: 0 },
+  },
+
+  /**
+   * Electric grid (phase 2b). Distances are in tiles, measured as a square
+   * around the building (diagonal neighbours count as distance 1).
+   * link: two grid nodes join when their distance is within the larger
+   *       link range of the two.
+   * supply: machines within this distance of a node are powered by it.
+   */
+  grid: {
+    pole: { link: 4, supply: 2 },
+    coalPlant: { link: 1, supply: 1 },
+    windmill: { link: 1, supply: 1 },
+    databank: { link: 2, supply: 2 },
   },
 
   /** Share of the cost returned when a building is demolished. */

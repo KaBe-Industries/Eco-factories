@@ -27,6 +27,8 @@ export type BuildingKind =
   | 'irrigator'
   | 'filterStation'
   | 'pollenSprayer'
+  // electric grid (phase 2b)
+  | 'pole'
   // logistics (phase 8)
   | 'belt'
   | 'sludgeProcessor';
@@ -74,6 +76,13 @@ export interface Building {
   inventory: Inventory;
   /** Generic work counter for timed actions (burning, producing sludge…). */
   progress: number;
+  /**
+   * Grid this building belongs to (recomputed every tick), or null when it
+   * is not connected. Id = lowest building id in the grid.
+   */
+  networkId: number | null;
+  /** Share of its energy demand the building receives this tick (0–1). */
+  power: number;
 }
 
 export type SpeciesId = 'fungi' | 'plants' | 'bees';
@@ -87,11 +96,22 @@ export interface DatabankFloor {
   thawProgress: number;
 }
 
-export interface EnergyReport {
+export interface NetworkReport {
+  id: number;
   produced: number;
   demanded: number;
-  /** produced / demanded, capped at 1. All consumers run at this ratio. */
+  /** produced / demanded, capped at 1. All consumers in the grid run at this ratio. */
   ratio: number;
+}
+
+export interface EnergyReport {
+  /** Sum over all grids. */
+  produced: number;
+  /** Sum of demand of connected consumers. */
+  demanded: number;
+  /** Switched-on consumers not connected to any grid. */
+  unconnected: number;
+  networks: NetworkReport[];
 }
 
 export interface GhostState {

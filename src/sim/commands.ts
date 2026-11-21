@@ -1,5 +1,6 @@
 import type { Config } from '../config';
-import { canBuild, findBuilding, isBuildable, refundFor, updateEnergy } from './buildings';
+import { updateGrid } from './grid';
+import { canBuild, findBuilding, isBuildable, refundFor } from './buildings';
 import { makeBuilding } from './state';
 import type { Command, GameState } from './types';
 
@@ -18,7 +19,7 @@ export function applyCommand(state: GameState, config: Config, command: Command)
       s.buildings.push(b);
       s.tiles[y * s.width + x].buildingId = b.id;
       s.material -= config.buildings[kind].cost;
-      updateEnergy(s, config);
+      updateGrid(s, config);
       return s;
     }
     case 'toggle': {
@@ -27,7 +28,7 @@ export function applyCommand(state: GameState, config: Config, command: Command)
       const s = structuredClone(state);
       const nb = findBuilding(s, b.id)!;
       nb.enabled = !nb.enabled;
-      updateEnergy(s, config);
+      updateGrid(s, config);
       return s;
     }
     case 'demolish': {
@@ -37,7 +38,7 @@ export function applyCommand(state: GameState, config: Config, command: Command)
       s.buildings = s.buildings.filter((o) => o.id !== b.id);
       s.tiles[b.y * s.width + b.x].buildingId = null;
       s.material += refundFor(config, b.kind);
-      updateEnergy(s, config);
+      updateGrid(s, config);
       return s;
     }
     case 'dismantleRuin': {

@@ -16,6 +16,10 @@
   --building-bg: rgba(255, 255, 255, 0.75);
   --tooltip-bg: #1f2a24;
   --bad: #c0392b;
+  --wire: #2b2b2b;
+  --pole: #4a3420;
+  --coverage: rgba(255, 230, 120, 0.28);
+  --coverage-preview: rgba(255, 220, 80, 0.25);
   --progress-bg: rgba(0, 0, 0, 0.35);
   --tooltip-text: #f4f1ea;
 }
@@ -38,6 +42,10 @@
     --building-bg: rgba(230, 235, 231, 0.8);
     --tooltip-bg: #e6ebe7;
     --bad: #ff6b5e;
+    --wire: #f0e6c8;
+    --pole: #d9c29a;
+    --coverage: rgba(255, 230, 120, 0.18);
+    --coverage-preview: rgba(255, 220, 80, 0.18);
     --progress-bg: rgba(0, 0, 0, 0.5);
     --tooltip-text: #161a17;
   }
@@ -151,3 +159,4 @@ button.build .desc { grid-area: desc; font-size: 12px; opacity: 0.8; }
   #tooltip .bad { color: #b3261e; }
   #tooltip .good { color: #1e7a3a; }
 }
+#popup .muted { color: var(--muted); font-size: 12px; }
