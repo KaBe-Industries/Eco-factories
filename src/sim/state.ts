@@ -3,7 +3,7 @@ import { generateMap } from './map';
 import { windAt } from './wind';
 import type { Building, BuildingKind, GameState, Inventory, Tile } from './types';
 
-export const STATE_VERSION = 4;
+export const STATE_VERSION = 5;
 
 export function emptyInventory(): Inventory {
   return { input: {}, output: {} };
@@ -15,7 +15,7 @@ export function emptyTile(): Tile {
     toxicity: 0,
     moisture: 0,
     baseMoisture: 0,
-    life: { fungi: false, plants: false, pollinated: false },
+    life: { fungi: false, plants: 0, hive: false, pollinated: false },
     item: null,
     buildingId: null,
     dismantleProgress: null,

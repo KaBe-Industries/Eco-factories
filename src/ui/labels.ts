@@ -1,5 +1,5 @@
 import { config } from '../config';
-import type { BuildBlockReason, BuildableKind, BuildingKind, TileKind, WireBlockReason } from '../sim';
+import type { BuildBlockReason, BuildableKind, BuildingKind, Condition, FloorStatus, PlantBlockReason, SpeciesId, TileKind, WireBlockReason } from '../sim';
 
 export const TILE_LABELS: Record<TileKind, string> = {
   soil: 'Půda',
@@ -75,4 +75,65 @@ export const WIRE_BLOCK_LABELS: Record<WireBlockReason, string> = {
   exists: 'Tyhle dva body už drát spojuje.',
   tooLong: `Drát je moc dlouhý (max. ${config.wire.maxLength} polí).`,
   noMaterial: 'Nedostatek materiálu na drát.',
+};
+
+export const SPECIES_LABELS: Record<SpeciesId, string> = {
+  fungi: 'Houby',
+  plants: 'Rákos a pionýrské rostliny',
+  bees: 'Včely',
+};
+
+export const SPECIES_ICONS: Record<SpeciesId, string> = {
+  fungi: '🍄',
+  plants: '🌾',
+  bees: '🐝',
+};
+
+export const SPECIES_REPLACES: Record<SpeciesId, string> = {
+  fungi: 'čističku půdy',
+  plants: 'závlahu a filtrační stanici',
+  bees: 'rozprašovač pylu',
+};
+
+export function speciesNeeds(species: SpeciesId): string {
+  const sp = config.species;
+  switch (species) {
+    case 'fungi':
+      return `Žijí na polích s toxicitou pod ${sp.fungi.maxToxicity}. Snižují toxicitu a samy se šíří na sousední pole.`;
+    case 'plants':
+      return `Rostou na polích s toxicitou pod ${sp.plants.maxToxicity} a vlhkostí nad ${sp.plants.minMoisture}. Drží vlhkost, na břehu čistí řeku. Šíří se, jen když jsou opylené.`;
+    case 'bees':
+      return 'Úl se zakládá na poli s rostlinami. Včely opylují kolem úlů, čím víc jich je, tím dál. Množí se, když mají dost rostlin.';
+  }
+}
+
+export const FLOOR_STATUS_LABELS: Record<FloorStatus, string> = {
+  locked: '🔒 Zamčeno',
+  unlocked: '🔓 Odemčeno',
+  thawing: '❄️ Rozmrazuje se',
+  ready: '✅ Připraveno',
+};
+
+export function conditionLabel(c: Condition): string {
+  switch (c.id) {
+    case 'lowToxTiles':
+      return `Pole s toxicitou pod ${c.threshold}: <b>${c.current} / ${c.target}</b>`;
+    case 'riverQuality':
+      return `Kvalita řeky: <b>${fmt(c.current)} / ${c.target}</b>`;
+    case 'plantTiles':
+      return `Pole s rostlinami: <b>${c.current} / ${c.target}</b>`;
+    case 'pollution':
+      return `Znečištění pod ${c.target}: <b>${fmt(c.current)}</b>`;
+  }
+}
+
+export const PLANT_BLOCK_LABELS: Record<PlantBlockReason, string> = {
+  notReady: 'Druh ještě není rozmražený.',
+  river: 'Do řeky se vysazovat nedá.',
+  occupied: 'Na poli stojí stavba.',
+  already: 'Tady už je.',
+  tooToxic: 'Půda je tu moc toxická.',
+  tooDry: 'Půda je tu moc suchá.',
+  needsPlants: 'Úl potřebuje pole s rostlinami.',
+  noMaterial: 'Nedostatek materiálu.',
 };

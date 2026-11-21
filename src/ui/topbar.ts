@@ -40,6 +40,11 @@ export function renderTopbar(el: HTMLElement, state: GameState, speedIndex: numb
     }
     <span class="stat" title="Vítr násobí výkon větrníků (0,3 až 1,2).">🌬️ Vítr <b>${fmt(state.wind, 2)}×</b></span>
     <span class="stat" title="Kvalita vody v řece (0 až 100). Zlepšuje ji filtrační stanice, sama se pomalu zhoršuje.">🏞️ Řeka <b>${fmt(state.riverQuality)}</b></span>
+    ${
+      state.bees > 0 || state.databank.find((f) => f.species === 'bees')!.status !== 'locked'
+        ? `<span class="stat" title="Populace včel (0 až 100).">🐝 Včely <b>${fmt(state.bees)}</b></span>`
+        : ''
+    }
     <span class="stat" title="Znečištění ovzduší (0 až 100).">🌫️ Znečištění <b>${fmt(state.pollution)}</b></span>
     <span class="stat">⏱ Tick <b>${fmt(state.tick)}</b></span>`,
   );

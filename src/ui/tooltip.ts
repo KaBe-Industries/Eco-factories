@@ -1,6 +1,10 @@
 import { config } from '../config';
 import {
+  beeRadius,
   canBuild,
+  canPlant,
+  fungiActive,
+  plantsThrive,
   canWire,
   energyOutputOf,
   findBuilding,
@@ -13,8 +17,8 @@ import {
   wireCost,
 } from '../sim';
 import type { GameState } from '../sim';
-import { BUILD_BLOCK_LABELS, BUILDING_LABELS, TILE_LABELS, WIRE_BLOCK_LABELS, fmt } from './labels';
-import type { Tool } from './tools';
+import { BUILD_BLOCK_LABELS, BUILDING_LABELS, PLANT_BLOCK_LABELS, TILE_LABELS, WIRE_BLOCK_LABELS, fmt } from './labels';
+import { isBuildTool, plantSpecies, type Tool } from './tools';
 import { networkLine, powerStatus } from './power';
 
 export interface TooltipContext {
@@ -46,6 +50,7 @@ export function tooltipHtml(state: GameState, x: number, y: number, ctx: Tooltip
     lines.push(`Toxicita: ${Math.round(t.toxicity)}`);
     const natural = Math.round(t.baseMoisture);
     lines.push(`Vlhkost: ${Math.round(t.moisture)}${Math.round(t.moisture) !== natural ? ` <span class="muted">(přirozeně ${natural})</span>` : ''}`);
+    lines.push(...lifeLines(state, t));
     const effects = machineEffectsOn(state, x, y);
     if (effects.length) lines.push(...effects);
     if (t.kind === 'hill') lines.push('Větrník tu dává ×1,5 energie.');
@@ -60,7 +65,14 @@ export function tooltipHtml(state: GameState, x: number, y: number, ctx: Tooltip
   }
   if (tool === 'wire') {
     lines.push(wireHint(state, building, wireStart));
-  } else if (tool) {
+  } else if (plantSpecies(tool)) {
+    const reason = canPlant(state, config, plantSpecies(tool)!, x, y);
+    lines.push(
+      reason
+        ? `<span class="bad">✖ ${PLANT_BLOCK_LABELS[reason]}</span>`
+        : `<span class="good">✔ Tady jde vysadit (🧱 ${config.databank.plantCost}).</span>`,
+    );
+  } else if (isBuildTool(tool)) {
     const reason = canBuild(state, config, tool, x, y);
     lines.push(
       reason
@@ -135,4 +147,34 @@ function machineEffectsOn(state: GameState, x: number, y: number): string[] {
     if (b.kind === 'pollenSprayer') out.push('<span class="muted">🌼 Rozprašovač tu opyluje</span>');
   }
   return [...new Set(out)];
+}
+
+/** What lives on a tile and why it does (not) thrive. */
+function lifeLines(state: GameState, t: GameState['tiles'][number]): string[] {
+  const out: string[] = [];
+  const sp = config.species;
+  if (t.life.fungi) {
+    out.push(
+      fungiActive(config, t)
+        ? `🍄 Houby čistí půdu (−${fmt(sp.fungi.toxicityPerTick, 1)} za tick)`
+        : `<span class="bad">🍄 Houby spí – toxicita je ${sp.fungi.maxToxicity} nebo víc</span>`,
+    );
+  }
+  if (t.life.plants > 0) {
+    let line = `🌾 Rostliny: vzrůst ${fmt(t.life.plants)} %`;
+    if (!plantsThrive(config, t)) {
+      const why = t.toxicity >= sp.plants.maxToxicity ? 'moc toxická půda' : 'moc sucho';
+      line += ` – <span class="bad">vadnou (${why})</span>`;
+    } else if (t.life.plants < sp.plants.spreadMinLevel) {
+      line += ' – rostou';
+    } else {
+      line += t.life.pollinated ? ' – opylené, šíří se' : ' – <span class="bad">neopylené, nešíří se</span>';
+    }
+    out.push(line);
+  }
+  if (t.life.hive) {
+    const r = beeRadius(state, config);
+    out.push(r > 0 ? `🐝 Úl: včely opylují v okruhu ${r}` : '<span class="bad">🐝 Úl je prázdný</span>');
+  }
+  return out;
 }

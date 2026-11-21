@@ -4,6 +4,7 @@ import { updateRuins } from './buildings';
 import type { GameState } from './types';
 import { updateWind } from './wind';
 import { updateEnvironment, updateMachines } from './environment';
+import { beePollination, updateBees, updateFungi, updatePlants, updateThaw, updateUnlocks } from './species';
 
 /**
  * Advances the simulation by one tick. Pure function: never mutates the
@@ -16,7 +17,13 @@ export function step(state: GameState, config: Config): GameState {
   updateRuins(s, config);
   updateGrid(s, config);
   updateMachines(s, config);
+  beePollination(s, config);
+  updateThaw(s, config);
+  updateFungi(s, config);
+  updatePlants(s, config);
+  updateBees(s, config);
   updateEnvironment(s, config);
+  updateUnlocks(s, config);
   return s;
 }
 

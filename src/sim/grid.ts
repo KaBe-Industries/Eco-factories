@@ -145,7 +145,7 @@ export function updateGrid(s: GameState, config: Config): void {
       if (isConsumer(config, b.kind) && b.enabled) unconnected++;
       continue;
     }
-    reports.get(b.networkId)!.demanded += energyUseOf(config, b);
+    reports.get(b.networkId)!.demanded += energyUseOf(s, config, b);
   }
   for (const r of reports.values()) r.ratio = r.demanded <= 0 ? 1 : Math.min(1, r.produced / r.demanded);
 

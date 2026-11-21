@@ -59,7 +59,10 @@ export function energyOutputOf(state: GameState, config: Config, b: Building): n
 }
 
 /** Energy a building needs this tick at full power (0 when switched off). */
-export function energyUseOf(config: Config, b: Building): number {
+export function energyUseOf(state: GameState, config: Config, b: Building): number {
+  if (b.kind === 'databank') {
+    return state.databank.some((f) => f.status === 'thawing') ? config.databank.thawEnergyPerTick : 0;
+  }
   if (!b.enabled || !isBuildable(config, b.kind)) return 0;
   return config.buildings[b.kind].energyUse;
 }

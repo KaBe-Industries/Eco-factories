@@ -43,7 +43,7 @@ export function popupHtml(state: GameState, sel: Selection): string | null {
   const effect = machineEffectLine(b);
   if (effect) lines.push(effect);
   const out = energyOutputOf(state, config, b);
-  const use = energyUseOf(config, b);
+  const use = energyUseOf(state, config, b);
   if (out > 0) lines.push(`Vyrábí ${fmt(out, 1)} ⚡`);
   if (use > 0) lines.push(`Spotřeba ${fmt(use)} ⚡`);
   const status = powerStatus(b);

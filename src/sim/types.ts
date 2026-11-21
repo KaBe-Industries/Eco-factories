@@ -36,7 +36,10 @@ export type BuildingKind =
 /** Living species placed on tiles. Bees are a global population instead. */
 export interface TileLife {
   fungi: boolean;
-  plants: boolean;
+  /** Plant growth level 0–100; 0 = no plants. */
+  plants: number;
+  /** A bee hive released on this tile (bee population itself is global). */
+  hive: boolean;
   /** Pollinated this tick (by a sprayer or bees). */
   pollinated: boolean;
 }

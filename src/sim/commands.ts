@@ -2,6 +2,7 @@ import type { Config } from '../config';
 import { updateGrid, addWire, canWire, removeWire } from './grid';
 import { canBuild, findBuilding, isBuildable, refundFor } from './buildings';
 import { makeBuilding } from './state';
+import { canPlant, canThaw, plant } from './species';
 import type { Command, GameState } from './types';
 
 /**
@@ -17,7 +18,11 @@ export function applyCommand(state: GameState, config: Config, command: Command)
       const b = makeBuilding(s.nextBuildingId++, kind, x, y);
       if (command.direction) b.direction = command.direction;
       s.buildings.push(b);
-      s.tiles[y * s.width + x].buildingId = b.id;
+      const tile = s.tiles[y * s.width + x];
+      tile.buildingId = b.id;
+      // A building replaces plants and hives on its tile; fungi live on in the soil.
+      tile.life.plants = 0;
+      tile.life.hive = false;
       s.material -= config.buildings[kind].cost;
       // Chaining: wire to the previous pole when in reach and affordable
       if (command.wireTo !== undefined && canWire(s, config, b.id, command.wireTo) === null) {
@@ -69,8 +74,22 @@ export function applyCommand(state: GameState, config: Config, command: Command)
       s.tiles[y * s.width + x].dismantleProgress = 0;
       return s;
     }
+    case 'thaw': {
+      if (!canThaw(state, command.species)) return state;
+      const s = structuredClone(state);
+      s.databank.find((f) => f.species === command.species)!.status = 'thawing';
+      updateGrid(s, config);
+      return s;
+    }
+    case 'plant': {
+      const { species, x, y } = command;
+      if (canPlant(state, config, species, x, y) !== null) return state;
+      const s = structuredClone(state);
+      plant(s, config, species, x, y);
+      return s;
+    }
     default:
-      // thaw, plant, dismissGhost arrive in later phases
+      // dismissGhost arrives in phase 5
       return state;
   }
 }

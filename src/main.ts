@@ -1,7 +1,7 @@
 import { config } from './config';
 import { applyCommand, createInitialState, isBuildable, isGridNode, step, wireEnds } from './sim';
-import type { BuildableKind, Command, GameState } from './sim';
-import type { Tool } from './ui/tools';
+import type { BuildableKind, Command, GameState, SpeciesId } from './sim';
+import { isBuildTool, plantSpecies, type Tool } from './ui/tools';
 import { drawMap } from './ui/canvas';
 import { renderTopbar } from './ui/topbar';
 import { renderSidepanel } from './ui/sidepanel';
@@ -120,6 +120,11 @@ side.addEventListener('click', (e) => {
   const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('button');
   if (!btn || btn.disabled) return;
   if (btn.dataset.overlay) overlay = btn.dataset.overlay as OverlayMode;
+  if (btn.dataset.thaw) send({ type: 'thaw', species: btn.dataset.thaw as SpeciesId });
+  if (btn.dataset.plant) {
+    const t = `plant:${btn.dataset.plant}` as Tool;
+    setTool(tool === t ? null : t);
+  }
   if (btn.dataset.build) {
     const kind = btn.dataset.build;
     if (kind === 'wire') setTool(tool === 'wire' ? null : 'wire');
@@ -227,7 +232,12 @@ canvas.addEventListener('click', (e) => {
   if (!t) return;
   if (tool === 'wire') return clickWireTool(t);
   if (tool === 'pole') return clickPoleTool(t);
-  if (tool) {
+  const species = plantSpecies(tool);
+  if (species) {
+    send({ type: 'plant', species, x: t.x, y: t.y });
+    return;
+  }
+  if (isBuildTool(tool)) {
     send({ type: 'build', kind: tool, x: t.x, y: t.y });
     return;
   }

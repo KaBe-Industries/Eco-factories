@@ -1,9 +1,10 @@
 import { config } from '../config';
 import { ENERGY_SOURCES, GRID_BUILDINGS, MACHINES } from '../sim';
 import type { BuildableKind, GameState } from '../sim';
-import type { Tool } from './tools';
-import { BUILDING_DESCRIPTIONS, BUILDING_ICONS, BUILDING_LABELS, fmt } from './labels';
+import { isBuildTool, plantSpecies, type Tool } from './tools';
+import { BUILDING_DESCRIPTIONS, BUILDING_ICONS, BUILDING_LABELS, SPECIES_LABELS, fmt } from './labels';
 import { setHtml } from './dom';
+import { databankHtml } from './databank';
 import { OVERLAYS, type OverlayMode } from './overlay';
 
 function buildButton(state: GameState, kind: BuildableKind, tool: Tool): string {
@@ -42,7 +43,9 @@ export function renderSidepanel(
       ? 'Klikni na sloup, elektrárnu, větrník nebo Databanku a pak na druhý bod. Drát pokračuje z posledního bodu. Esc zruší.'
       : tool === 'pole'
         ? 'Klikni na mapu a postav <b>sloup</b>. Sloupy stavěné za sebou se samy spojí drátem. Esc přeruší řetěz.'
-        : tool
+        : plantSpecies(tool)
+          ? `Klikni na pole a vysaď <b>${SPECIES_LABELS[plantSpecies(tool)!].toLowerCase()}</b>. Esc zruší výběr.`
+          : isBuildTool(tool)
           ? `Klikni na mapu a postav <b>${BUILDING_LABELS[tool]}</b>. Pravé tlačítko nebo Esc zruší výběr.`
           : 'Vyber stavbu a klikni na mapu. Kliknutím na stavbu, drát nebo ruinu je můžeš ovládat. Mezerník = pauza.';
   const overlayButtons = (Object.keys(OVERLAYS) as OverlayMode[])
@@ -51,6 +54,8 @@ export function renderSidepanel(
   setHtml(
     el,
     `
+    <h2>🏛️ Databanka</h2>
+    ${databankHtml(state, tool)}
     <h2>Energie</h2>
     <div class="build-list">${ENERGY_SOURCES.map((k) => buildButton(state, k, tool)).join('')}</div>
     <h2>Síť</h2>

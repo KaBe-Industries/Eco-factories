@@ -18,6 +18,9 @@
   --bad: #c0392b;
   --wire-reach: #2b2b2b;
   --effect: #7d3cc8;
+  --plant: #2f8a3a;
+  --fungi: #f0d9a8;
+  --fungi-stem: #5a4026;
   --wire-point: rgba(40, 40, 40, 0.55);
   --good: #2e9d4f;
   --pole: #4a3420;
@@ -47,6 +50,9 @@
     --bad: #ff6b5e;
     --wire-reach: #f0e6c8;
     --effect: #c9a2ff;
+    --plant: #5fd06a;
+    --fungi: #f3e6c8;
+    --fungi-stem: #a88d63;
     --wire-point: rgba(240, 230, 200, 0.6);
     --good: #5fd38a;
     --pole: #d9c29a;
@@ -167,3 +173,16 @@ button.build .desc { grid-area: desc; font-size: 12px; opacity: 0.8; }
 }
 #popup .muted { color: var(--muted); font-size: 12px; }
 .badge.playtest { background: #7d5ba6; margin-left: 0; }
+.floor { border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; margin-bottom: 8px; }
+.floor.locked { opacity: 0.85; }
+.floor.ready { border-color: var(--accent); }
+.floor-head { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; margin-bottom: 4px; }
+.floor .status { font-size: 12px; white-space: nowrap; }
+.floor .cond { font-size: 13px; margin: 2px 0; }
+.floor .cond.met { color: var(--accent); }
+.floor button { margin: 4px 0; }
+.floor .muted, #sidepanel .muted { color: var(--muted); }
+.small { font-size: 12px; margin-top: 4px; }
+.bar { display: block; height: 5px; border-radius: 3px; background: var(--border); margin: 3px 0 4px; overflow: hidden; }
+.bar > span { display: block; height: 100%; background: var(--accent); }
+#sidepanel button.active .muted { color: inherit; opacity: 0.85; }

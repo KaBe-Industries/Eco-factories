@@ -84,7 +84,7 @@ export function updateEnvironment(s: GameState, config: Config): void {
     const diff = t.baseMoisture - t.moisture;
     if (diff === 0) continue;
     // Plants keep the moisture they have (phase 4); otherwise drift back.
-    if (diff < 0 && t.life.plants) continue;
+    if (diff < 0 && t.life.plants > 0) continue;
     t.moisture += Math.sign(diff) * Math.min(Math.abs(diff), moistureDriftPerTick);
   }
   const floor = config.start.riverQuality;

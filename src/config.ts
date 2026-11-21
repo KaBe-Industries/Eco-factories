@@ -139,6 +139,57 @@ export const config = {
     pollenSprayer: { radius: 3 },
   },
 
+  /** Databank: thawing a species (phase 4). */
+  databank: {
+    thawEnergyPerTick: 8,
+    /** Ticks of thawing at full power. */
+    thawTicks: 20,
+    /** Material per tile when planting a species. */
+    plantCost: 5,
+  },
+
+  /** Unlock conditions of the Databank floors (phase 4). */
+  unlock: {
+    fungi: { tiles: 10, belowToxicity: 60 },
+    plants: { riverQuality: 40, tiles: 15, belowToxicity: 30 },
+    bees: { plantTiles: 20, belowPollution: 40 },
+  },
+
+  /** Living species (phase 4). Chances are per tick and per neighbouring tile. */
+  species: {
+    fungi: {
+      /** Fungi work only on tiles with toxicity below this. */
+      maxToxicity: 70,
+      toxicityPerTick: 0.5,
+      spreadChance: 0.02,
+    },
+    plants: {
+      maxToxicity: 30,
+      minMoisture: 40,
+      /** Growth level 0–100 of a freshly planted or spread tile. */
+      startLevel: 30,
+      growthPerTick: 1,
+      /** Decline per tick when the tile is too toxic or too dry. */
+      wiltPerTick: 0.5,
+      /** Only tiles at least this grown can spread. */
+      spreadMinLevel: 50,
+      spreadChance: 0.05,
+      /** River quality added per tick by one fully grown tile on the river bank. */
+      riverQualityPerBankTile: 0.02,
+    },
+    bees: {
+      /** Population of a freshly released hive. */
+      startPopulation: 10,
+      /** Population the plants can feed: this many per plant tile, max 100. */
+      populationPerPlantTile: 2,
+      /** Change per tick toward that level. */
+      growthPerTick: 0.3,
+      /** Pollination radius around a hive: base + population / perRadius. */
+      baseRadius: 1,
+      populationPerRadius: 25,
+    },
+  },
+
   /** Natural processes that run without the player (phase 3). */
   environment: {
     /**

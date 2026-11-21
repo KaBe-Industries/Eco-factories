@@ -98,7 +98,7 @@ describe('irrigation and evaporation', () => {
   it('plants keep their moisture (no evaporation on overgrown tiles)', () => {
     let s = field(60, 30);
     tile(s, 6, 5).moisture = 70;
-    tile(s, 6, 5).life.plants = true;
+    tile(s, 6, 5).life.plants = 50;
     s = stepMany(s, config, 50);
     expect(tile(s, 6, 5).moisture).toBe(70);
   });

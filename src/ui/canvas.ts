@@ -1,9 +1,9 @@
 import { config } from '../config';
-import { canBuild, canWire, findBuilding, isConsumer, isGridNode, machineRadius, supplierFor, tileDistance, wireCost, wireEnds } from '../sim';
+import { beeRadius, canBuild, canPlant, canWire, fungiActive, findBuilding, isConsumer, isGridNode, machineRadius, supplierFor, tileDistance, wireCost, wireEnds } from '../sim';
 import type { Building, GameState, GridNodeKind, TileKind } from '../sim';
-import { BUILDING_ICONS } from './labels';
+import { BUILDING_ICONS, SPECIES_ICONS } from './labels';
 import { OVERLAYS, rampColor, type OverlayMode } from './overlay';
-import { networkColor, type Tool } from './tools';
+import { isBuildTool, networkColor, plantSpecies, type Tool } from './tools';
 
 function cssVar(name: string): string {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
@@ -137,6 +137,7 @@ export function drawMap(canvas: HTMLCanvasElement, state: GameState, view: MapVi
       ctx.fillStyle = fill;
       ctx.fillRect(x, y, px, px);
     }
+    drawLife(ctx, t, x, y, px);
   });
 
   // Grid
@@ -161,7 +162,7 @@ export function drawMap(canvas: HTMLCanvasElement, state: GameState, view: MapVi
   const networkIds = state.energy.networks.map((n) => n.id);
 
   // Power coverage while placing a building: tiles some grid node reaches
-  if (tool && tool !== 'wire') {
+  if (isBuildTool(tool)) {
     ctx.fillStyle = cssVar('--coverage');
     for (let ty = 0; ty < state.height; ty++) {
       for (let tx = 0; tx < state.width; tx++) {
@@ -260,6 +261,10 @@ export function drawMap(canvas: HTMLCanvasElement, state: GameState, view: MapVi
     const r = b ? machineRadius(config, b.kind) : null;
     if (b && r !== null) drawEffectArea(ctx, b, r, px);
   };
+  if (hover && !tool && state.tiles[hover.y * state.width + hover.x].life.hive) {
+    const r = beeRadius(state, config);
+    if (r > 0) drawEffectArea(ctx, hover, r, px);
+  }
   if (!tool) {
     areaOf(selected);
     if (!selected || !hover || hover.x !== selected.x || hover.y !== selected.y) areaOf(hover);
@@ -276,7 +281,15 @@ export function drawMap(canvas: HTMLCanvasElement, state: GameState, view: MapVi
   if (hover) {
     const hx = hover.x * px;
     const hy = hover.y * px;
-    if (tool && tool !== 'wire') {
+    const species = plantSpecies(tool);
+    if (species) {
+      const ok = canPlant(state, config, species, hover.x, hover.y) === null;
+      ctx.fillStyle = ok ? 'rgba(60, 180, 90, 0.45)' : 'rgba(220, 50, 50, 0.45)';
+      ctx.fillRect(hx, hy, px, px);
+      ctx.globalAlpha = 0.7;
+      ctx.fillText(SPECIES_ICONS[species], hx + px / 2, hy + px / 2 + 1);
+      ctx.globalAlpha = 1;
+    } else if (isBuildTool(tool)) {
       const ok = canBuild(state, config, tool, hover.x, hover.y) === null;
       if (isGridNode(config, tool)) drawSupplyPreview(ctx, tool, hover, px);
       const r = machineRadius(config, tool);
@@ -363,4 +376,47 @@ function drawEffectArea(ctx: CanvasRenderingContext2D, at: { x: number; y: numbe
   ctx.setLineDash([4, 3]);
   ctx.strokeRect((at.x - r) * px + 1, (at.y - r) * px + 1, (2 * r + 1) * px - 2, (2 * r + 1) * px - 2);
   ctx.setLineDash([]);
+}
+
+/** Fungi (small caps), plants (green blades by growth) and hives on a tile. */
+function drawLife(ctx: CanvasRenderingContext2D, t: GameState['tiles'][number], x: number, y: number, px: number): void {
+  if (t.life.plants > 0) {
+    const h = px * 0.15 + (px * 0.45 * t.life.plants) / 100;
+    ctx.strokeStyle = cssVar('--plant');
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    for (const fx of [0.2, 0.35, 0.5, 0.65, 0.8]) {
+      const bx = x + px * fx;
+      const by = y + px * 0.92;
+      ctx.beginPath();
+      ctx.moveTo(bx, by);
+      ctx.quadraticCurveTo(bx + px * 0.06, by - h * 0.6, bx + (fx < 0.5 ? -1 : 1) * px * 0.05, by - h);
+      ctx.stroke();
+    }
+    ctx.lineCap = 'butt';
+  }
+  if (t.life.fungi) {
+    ctx.globalAlpha = fungiActive(config, t) ? 1 : 0.45;
+    for (const [fx, fy, r] of [[0.24, 0.36, 0.16], [0.5, 0.24, 0.12], [0.44, 0.5, 0.1]]) {
+      const cx = x + px * fx;
+      const cy = y + px * fy;
+      ctx.fillStyle = cssVar('--fungi-stem');
+      ctx.fillRect(cx - px * 0.025, cy, px * 0.05, px * r * 1.1);
+      ctx.beginPath();
+      ctx.arc(cx, cy + 1, px * r, Math.PI, 0);
+      ctx.closePath();
+      ctx.fillStyle = cssVar('--fungi');
+      ctx.fill();
+      ctx.strokeStyle = cssVar('--fungi-stem');
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+  }
+  if (t.life.hive) {
+    const old = ctx.font;
+    ctx.font = `${Math.round(px * 0.42)}px system-ui, "Apple Color Emoji", "Segoe UI Emoji", sans-serif`;
+    ctx.fillText('🐝', x + px * 0.72, y + px * 0.28);
+    ctx.font = old;
+  }
 }
