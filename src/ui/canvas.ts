@@ -1,5 +1,5 @@
 import { config } from '../config';
-import { beeRadius, canBuild, canPlant, canWire, fungiActive, findBuilding, isConsumer, isGridNode, machineRadius, supplierFor, tileDistance, wireCost, wireEnds } from '../sim';
+import { beeRadius, coalPlantRunning, isAcidRain, canBuild, canPlant, canWire, fungiActive, findBuilding, isConsumer, isGridNode, machineRadius, supplierFor, tileDistance, wireCost, wireEnds } from '../sim';
 import type { Building, GameState, GridNodeKind, TileKind } from '../sim';
 import { BUILDING_ICONS, SPECIES_ICONS } from './labels';
 import { OVERLAYS, rampColor, type OverlayMode } from './overlay';
@@ -161,6 +161,19 @@ export function drawMap(canvas: HTMLCanvasElement, state: GameState, view: MapVi
   const center = (b: { x: number; y: number }): [number, number] => [b.x * px + px / 2, b.y * px + px / 2];
   const networkIds = state.energy.networks.map((n) => n.id);
 
+  // Pollution overlay: smoke around running coal plants shows where it comes from
+  if (overlay === 'pollution') {
+    for (const b of state.buildings) {
+      if (!coalPlantRunning(b)) continue;
+      const [cx, cy] = [b.x * px + px / 2, b.y * px + px / 2];
+      const g = ctx.createRadialGradient(cx, cy, px * 0.3, cx, cy, px * 3);
+      g.addColorStop(0, 'rgba(40, 35, 30, 0.6)');
+      g.addColorStop(1, 'rgba(40, 35, 30, 0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(cx - px * 3, cy - px * 3, px * 6, px * 6);
+    }
+  }
+
   // Power coverage while placing a building: tiles some grid node reaches
   if (isBuildTool(tool)) {
     ctx.fillStyle = cssVar('--coverage');
@@ -268,6 +281,21 @@ export function drawMap(canvas: HTMLCanvasElement, state: GameState, view: MapVi
   if (!tool) {
     areaOf(selected);
     if (!selected || !hover || hover.x !== selected.x || hover.y !== selected.y) areaOf(hover);
+  }
+
+  // Acid rain: slanted streaks over the whole map
+  if (isAcidRain(state, config)) {
+    ctx.strokeStyle = 'rgba(120, 170, 90, 0.45)';
+    ctx.lineWidth = 1.5;
+    const offset = (state.tick * 7) % 28;
+    for (let i = -h; i < w; i += 28) {
+      for (let j = -28; j < h; j += 56) {
+        ctx.beginPath();
+        ctx.moveTo(i + offset + j * 0.3, j + offset);
+        ctx.lineTo(i + offset + j * 0.3 - 6, j + offset + 16);
+        ctx.stroke();
+      }
+    }
   }
 
   // Selection

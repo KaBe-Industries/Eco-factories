@@ -1,9 +1,9 @@
 import type { Config } from '../config';
-import { generateMap } from './map';
+import { databankPosition, generateMap } from './map';
 import { windAt } from './wind';
 import type { Building, BuildingKind, GameState, Inventory, Tile } from './types';
 
-export const STATE_VERSION = 5;
+export const STATE_VERSION = 6;
 
 export function emptyInventory(): Inventory {
   return { input: {}, output: {} };
@@ -73,8 +73,14 @@ export function createInitialState(config: Config): GameState {
       { species: 'plants', status: 'locked', thawProgress: 0 },
       { species: 'bees', status: 'locked', thawProgress: 0 },
     ],
-    ghost: { shown: [], lastPollutionWarningTick: null, active: null },
+    ghost: {
+      shown: ['intro'],
+      lastPollutionWarningTick: null,
+      active: { id: 'intro', ...databankPosition(config) },
+      queue: [],
+    },
     stats: { collapses: 0, maxBeltTiles: 0 },
+    acidRainEpisode: false,
     stableTicks: 0,
     wonAtTick: null,
   };

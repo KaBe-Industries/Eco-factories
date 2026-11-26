@@ -2,7 +2,8 @@ import type { Config } from '../config';
 import { updateGrid, addWire, canWire, removeWire } from './grid';
 import { canBuild, findBuilding, isBuildable, refundFor } from './buildings';
 import { makeBuilding } from './state';
-import { canPlant, canThaw, plant } from './species';
+import { canPlant, canThaw, livingReplacementFor, plant } from './species';
+import { dismissGhost, showGhost } from './ghost';
 import type { Command, GameState } from './types';
 
 /**
@@ -28,6 +29,7 @@ export function applyCommand(state: GameState, config: Config, command: Command)
       if (command.wireTo !== undefined && canWire(s, config, b.id, command.wireTo) === null) {
         addWire(s, config, b.id, command.wireTo);
       }
+      if (kind === 'coalPlant') showGhost(s, 'firstCoal', x, y);
       updateGrid(s, config);
       return s;
     }
@@ -51,6 +53,7 @@ export function applyCommand(state: GameState, config: Config, command: Command)
       const s = structuredClone(state);
       const nb = findBuilding(s, b.id)!;
       nb.enabled = !nb.enabled;
+      if (!nb.enabled && livingReplacementFor(s, nb.kind)) showGhost(s, 'firstMachineReplaced', nb.x, nb.y);
       updateGrid(s, config);
       return s;
     }
@@ -63,6 +66,7 @@ export function applyCommand(state: GameState, config: Config, command: Command)
       s.buildings = s.buildings.filter((o) => o.id !== b.id);
       s.tiles[b.y * s.width + b.x].buildingId = null;
       s.material += refundFor(config, b.kind);
+      if (livingReplacementFor(s, b.kind)) showGhost(s, 'firstMachineReplaced', b.x, b.y);
       updateGrid(s, config);
       return s;
     }
@@ -88,8 +92,13 @@ export function applyCommand(state: GameState, config: Config, command: Command)
       plant(s, config, species, x, y);
       return s;
     }
+    case 'dismissGhost': {
+      if (state.ghost.active === null) return state;
+      const s = structuredClone(state);
+      dismissGhost(s);
+      return s;
+    }
     default:
-      // dismissGhost arrives in phase 5
       return state;
   }
 }

@@ -9,6 +9,7 @@ import {
   energyOutputOf,
   findBuilding,
   inMachineArea,
+  isAcidRain,
   isConsumer,
   isGridNode,
   isRiverBank,
@@ -19,6 +20,7 @@ import {
 import type { GameState } from '../sim';
 import { BUILD_BLOCK_LABELS, BUILDING_LABELS, PLANT_BLOCK_LABELS, TILE_LABELS, WIRE_BLOCK_LABELS, fmt } from './labels';
 import { isBuildTool, plantSpecies, type Tool } from './tools';
+import { beesWhy, coalSoilOn } from './why';
 import { networkLine, powerStatus } from './power';
 
 export interface TooltipContext {
@@ -51,6 +53,11 @@ export function tooltipHtml(state: GameState, x: number, y: number, ctx: Tooltip
     const natural = Math.round(t.baseMoisture);
     lines.push(`Vlhkost: ${Math.round(t.moisture)}${Math.round(t.moisture) !== natural ? ` <span class="muted">(přirozeně ${natural})</span>` : ''}`);
     lines.push(...lifeLines(state, t));
+    const coal = coalSoilOn(state, x, y);
+    if (coal > 0) lines.push(`<span class="bad">🏭 Elektrárna tu zamořuje půdu (+${fmt(coal, 2)} za tick)</span>`);
+    if (isAcidRain(state, config)) {
+      lines.push(`<span class="bad">☔ Kyselé deště: toxicita +${fmt(config.acidRain.toxicityPerTick, 2)} za tick</span>`);
+    }
     const effects = machineEffectsOn(state, x, y);
     if (effects.length) lines.push(...effects);
     if (t.kind === 'hill') lines.push('Větrník tu dává ×1,5 energie.');
@@ -162,7 +169,10 @@ function lifeLines(state: GameState, t: GameState['tiles'][number]): string[] {
   }
   if (t.life.plants > 0) {
     let line = `🌾 Rostliny: vzrůst ${fmt(t.life.plants)} %`;
-    if (!plantsThrive(config, t)) {
+    const acidStunted = isAcidRain(state, config) && !t.life.pollinated;
+    if (acidStunted && plantsThrive(config, t)) {
+      line += ' – <span class="bad">kyselé deště, bez opylení odumírají</span>';
+    } else if (!plantsThrive(config, t)) {
       const why = t.toxicity >= sp.plants.maxToxicity ? 'moc toxická půda' : 'moc sucho';
       line += ` – <span class="bad">vadnou (${why})</span>`;
     } else if (t.life.plants < sp.plants.spreadMinLevel) {
@@ -175,6 +185,8 @@ function lifeLines(state: GameState, t: GameState['tiles'][number]): string[] {
   if (t.life.hive) {
     const r = beeRadius(state, config);
     out.push(r > 0 ? `🐝 Úl: včely opylují v okruhu ${r}` : '<span class="bad">🐝 Úl je prázdný</span>');
+    const why = beesWhy(state);
+    if (why) out.push(`<span class="bad">${why}</span>`);
   }
   return out;
 }

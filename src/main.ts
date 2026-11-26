@@ -9,6 +9,7 @@ import { popupHtml, type Selection } from './ui/popup';
 import type { OverlayMode } from './ui/overlay';
 import { tooltipHtml } from './ui/tooltip';
 import { setHtml } from './ui/dom';
+import { renderGhost } from './ui/ghost';
 
 // ---- UI state (not part of the simulation) -------------------------------
 /** Playtest mode: more starting material for trying things out (see config.playtest). */
@@ -38,6 +39,12 @@ document.body.appendChild(tooltip);
 const popup = document.createElement('div');
 popup.id = 'popup';
 mapWrap.appendChild(popup);
+const ghost = document.createElement('div');
+ghost.id = 'ghost';
+mapWrap.appendChild(ghost);
+ghost.addEventListener('click', (e) => {
+  if ((e.target as HTMLElement).closest('[data-ghost]')) send({ type: 'dismissGhost' });
+});
 
 const px = config.ui.tilePx;
 
@@ -75,6 +82,7 @@ function selectedTile(): { x: number; y: number } | null {
 function render(): void {
   renderTopbar(topbar, state, speedIndex, playtest);
   renderSidepanel(side, state, tool, overlay);
+  renderGhost(ghost, state);
   drawMap(canvas, state, {
     overlay,
     hover,

@@ -34,7 +34,7 @@ fabriku s pásy a pak ji postupně strhnout?
 - Mapou vede řeka (2 až 3 pole široká, mírně se vlní).
 - Typy polí: půda, řeka, ruina, kopec (jen kopec dává větrníkům bonus).
 - Každé pole půdy má hodnoty 0 až 100:
-  - `toxicity` (start 50 až 90, u ruin vyšší)
+  - `toxicity` (start 60 až 90, u ruin vyšší)
   - `moisture` (start podle vzdálenosti od řeky, dál od řeky sušší)
 - Globální hodnoty:
   - `riverQuality` 0 až 100 (start 15)

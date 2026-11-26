@@ -30,7 +30,7 @@ export const config = {
     /** Keep hills and ruins at least this far (tiles) from the Databank. */
     databankClearance: 2,
     toxicity: {
-      soilMin: 50,
+      soilMin: 60,
       soilMax: 90,
       ruinMin: 85,
       ruinMax: 100,
@@ -188,6 +188,39 @@ export const config = {
       baseRadius: 1,
       populationPerRadius: 25,
     },
+  },
+
+  /** Air pollution and its consequences (phase 5). */
+  pollution: {
+    /** Added per tick by each running coal plant. */
+    coalPlantPerTick: 0.4,
+    /** Natural decrease per tick. */
+    decayPerTick: 0.05,
+    /** Decrease per tick for each tile with plants. */
+    perPlantTile: 0.002,
+    /** Above this the ghost warns (repeatable, at most once per warningRepeatTicks). */
+    warningAbove: 40,
+    warningRepeatTicks: 100,
+    /** Above this acid rain falls. */
+    acidRainAbove: 50,
+  },
+
+  /** Effects of acid rain while pollution is above pollution.acidRainAbove. */
+  acidRain: {
+    /** Share of bees lost per tick (0.03 = 3 %). */
+    beeLossPerTick: 0.03,
+    /** Plants without pollination stop growing and lose this much per tick. */
+    plantWiltPerTick: 0.3,
+    /** Toxicity added per tick to every land tile. */
+    toxicityPerTick: 0.05,
+  },
+
+  /** Local soil contamination around a running coal plant (phase 5). */
+  coalSoil: {
+    /** Toxicity per tick on the plant's tile and its direct neighbours. */
+    near: 1.5,
+    /** Toxicity per tick two tiles away. */
+    far: 0.75,
   },
 
   /** Natural processes that run without the player (phase 3). */

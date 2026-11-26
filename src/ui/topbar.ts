@@ -2,6 +2,7 @@ import { config } from '../config';
 import type { GameState } from '../sim';
 import { setHtml } from './dom';
 import { fmt, plural } from './labels';
+import { beesWhy, pollutionWhy } from './why';
 
 const SPEED_LABELS = ['⏸ Pauza', '▶ 1×', '⏩ 3×'];
 
@@ -42,10 +43,16 @@ export function renderTopbar(el: HTMLElement, state: GameState, speedIndex: numb
     <span class="stat" title="Kvalita vody v řece (0 až 100). Zlepšuje ji filtrační stanice, sama se pomalu zhoršuje.">🏞️ Řeka <b>${fmt(state.riverQuality)}</b></span>
     ${
       state.bees > 0 || state.databank.find((f) => f.species === 'bees')!.status !== 'locked'
-        ? `<span class="stat" title="Populace včel (0 až 100).">🐝 Včely <b>${fmt(state.bees)}</b></span>`
+        ? `<span class="stat ${beesWhy(state) ? 'warn' : ''}" title="${beesWhy(state) ?? 'Populace včel (0 až 100). Roste, když mají dost rostlin.'}">🐝 Včely <b>${fmt(state.bees)}</b>${beesWhy(state) ? ' <span class="badge">umírají – proč?</span>' : ''}</span>`
         : ''
     }
-    <span class="stat" title="Znečištění ovzduší (0 až 100).">🌫️ Znečištění <b>${fmt(state.pollution)}</b></span>
+    <span class="stat ${state.pollution > config.pollution.warningAbove ? 'warn' : ''}" title="${pollutionWhy(state)}">🌫️ Znečištění <b>${fmt(state.pollution)}</b>${
+      state.pollution > config.pollution.acidRainAbove
+        ? ' <span class="badge">☔ kyselé deště</span>'
+        : state.pollution > config.pollution.warningAbove
+          ? ` <span class="badge warn-soft">nad ${config.pollution.warningAbove}!</span>`
+          : ''
+    }</span>
     <span class="stat">⏱ Tick <b>${fmt(state.tick)}</b></span>`,
   );
 }

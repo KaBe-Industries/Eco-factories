@@ -42,7 +42,7 @@ export const OVERLAYS: Record<OverlayMode, OverlayInfo> = {
   },
   pollution: {
     label: '🌫️ Znečištění',
-    legend: 'Znečištění ovzduší je společné pro celou mapu. Čím šedší, tím horší.',
+    legend: 'Znečištění ovzduší je společné pro celou mapu – čím šedší, tím horší. Tmavý kouř ukazuje uhelné elektrárny, které ho způsobují. Nad 50 padají kyselé deště.',
     ramp: [
       [70, 60, 55],
       [70, 60, 55],

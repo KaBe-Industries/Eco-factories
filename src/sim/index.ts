@@ -9,3 +9,5 @@ export * from './wind';
 export * from './grid';
 export * from './environment';
 export * from './species';
+export * from './pollution';
+export * from './ghost';

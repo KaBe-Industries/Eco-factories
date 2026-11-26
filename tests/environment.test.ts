@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { config } from '../src/config';
+import { config as baseConfig } from '../src/config';
+
+// These tests check machines alone; coal plant soil contamination (phase 5) is tested separately.
+const config = { ...baseConfig, coalSoil: { near: 0, far: 0 } };
 import { applyCommand, step, stepMany } from '../src/sim';
 import type { BuildableKind, GameState } from '../src/sim';
 import { blank } from './helpers';

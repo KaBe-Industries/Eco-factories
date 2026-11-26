@@ -1,3 +1,11 @@
 {
-  "intro": "Vítej v nivě. Já jsem duch poslední včely. Uprostřed stojí Databanka – v ní spí semena a spory všeho, co tu kdysi žilo. Vyléčíš to tu?"
+  "intro": "Vítej v nivě. Já jsem duch poslední včely. Uprostřed stojí Databanka – v ní spí spory, semena a úly všeho, co tu kdysi žilo. Vyčisti půdu a řeku a Databanka ti postupně vydá živé druhy, které stroje nahradí. Až půjde fabrika vypnout, niva bude zdravá.",
+  "firstCoal": "Tenkrát to taky začalo jednou elektrárnou. Jen na přechodnou dobu.",
+  "unlock_fungi": "První patro Databanky se probouzí: houby. Rozmraz je a vysaď na půdu s toxicitou pod 70. Samy ji čistí a samy se šíří – časem nebudeš čističky potřebovat.",
+  "unlock_plants": "Druhé patro: rákos a pionýrské rostliny. Potřebují čistou (toxicita pod 30) a vlhkou půdu (nad 40). Drží vodu a na břehu čistí řeku. Ale šířit se umí jen opylené.",
+  "unlock_bees": "Třetí patro… moje sestry. Úl založ na poli s rostlinami. Čím víc rostlin, tím víc včel, a čím víc včel, tím dál opylují. Jen ať je vzduch čistý.",
+  "pollutionWarning": "Vzduch houstne. Znečištění je přes 40. Až přeleze 50, začnou padat kyselé deště: včely umírají, neopylené rostliny vadnou, půda zase jedovatí. Uber uhlí, dokud je čas.",
+  "firstBeeDieOff": "Prší kyselý déšť a včely umírají. Znečištění je přes 50 – dýmají ho uhelné elektrárny. Bez včel nebude opylení, bez opylení rostliny vadnou a s nimi vlhkost i řeka. Sniž znečištění pod 40 a niva se vzpamatuje.",
+  "firstMachineReplaced": "Vidíš? Ten stroj už nepotřebuješ – jeho práci dělá život sám. Takhle se to dělá.",
+  "win": "Niva je vyléčená. Řeka teče čistá, včely bzučí a fabrika mlčí. Tenkrát jsme to nezvládli. Ty ano. Děkuju."
 }

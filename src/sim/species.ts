@@ -1,6 +1,7 @@
 import type { Config } from '../config';
 import { isRiverBank } from './map';
 import { nextRandom } from './rng';
+import { databankTile, showGhost } from './ghost';
 import type { DatabankFloor, GameState, SpeciesId, Tile } from './types';
 
 const NEIGHBOURS_4: ReadonlyArray<[number, number]> = [
@@ -82,7 +83,11 @@ export function updateUnlocks(s: GameState, config: Config): void {
     const f = s.databank[i];
     if (f.status !== 'locked') continue;
     if (i > 0 && s.databank[i - 1].status === 'locked') break;
-    if (floorConditions(s, config, f.species).every((c) => c.met)) f.status = 'unlocked';
+    if (floorConditions(s, config, f.species).every((c) => c.met)) {
+      f.status = 'unlocked';
+      const at = databankTile(s);
+      showGhost(s, `unlock_${f.species}`, at.x, at.y);
+    }
   }
 }
 
@@ -195,8 +200,13 @@ export function updatePlants(s: GameState, config: Config): void {
   const spreading: Tile[] = [];
   s.tiles.forEach((t, i) => {
     if (t.life.plants <= 0) return;
-    if (plantsThrive(config, t)) {
+    const acidStunted = s.pollution > config.pollution.acidRainAbove && !t.life.pollinated;
+    if (plantsThrive(config, t) && !acidStunted) {
       t.life.plants = Math.min(100, t.life.plants + p.growthPerTick);
+    } else if (acidStunted && plantsThrive(config, t)) {
+      // Acid rain: unpollinated plants stop growing and slowly die
+      t.life.plants = Math.max(0, t.life.plants - config.acidRain.plantWiltPerTick);
+      if (t.life.plants === 0) t.life.hive = false;
     } else {
       t.life.plants = Math.max(0, t.life.plants - p.wiltPerTick);
       if (t.life.plants === 0) t.life.hive = false;
@@ -256,4 +266,19 @@ export function updateBees(s: GameState, config: Config): void {
   const step = config.species.bees.growthPerTick;
   if (s.bees < target) s.bees = Math.min(target, s.bees + step);
   else s.bees = Math.max(target, s.bees - step);
+}
+
+/** Has a living species taken over the job of this machine kind? */
+export function livingReplacementFor(state: GameState, kind: string): boolean {
+  switch (kind) {
+    case 'soilCleaner':
+      return state.tiles.some((t) => t.life.fungi);
+    case 'irrigator':
+    case 'filterStation':
+      return state.tiles.some((t) => t.life.plants > 0);
+    case 'pollenSprayer':
+      return state.bees > 0 && state.tiles.some((t) => t.life.hive);
+    default:
+      return false;
+  }
 }

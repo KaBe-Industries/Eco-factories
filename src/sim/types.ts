@@ -133,10 +133,20 @@ export interface GhostState {
   /** Tick of the last repeatable pollution warning, or null. */
   lastPollutionWarningTick: number | null;
   /** Message currently displayed, or null. */
-  active: { id: string; x: number; y: number } | null;
+  active: GhostMessage | null;
+  /** Messages waiting until the player closes the active one. */
+  queue: GhostMessage[];
+}
+
+/** A ghost message: id of a text in src/content/ghost.json, shown at a map tile. */
+export interface GhostMessage {
+  id: string;
+  x: number;
+  y: number;
 }
 
 export interface GameStats {
+  /** Acid rain episodes so far (pollution rose above the acid rain limit). */
   collapses: number;
   /** Highest number of belt tiles at once (phase 8 balance report). */
   maxBeltTiles: number;
@@ -172,6 +182,9 @@ export interface GameState {
   databank: DatabankFloor[];
   ghost: GhostState;
   stats: GameStats;
+
+  /** An acid rain episode is running (ends when pollution falls below the warning limit). */
+  acidRainEpisode: boolean;
 
   /** Consecutive ticks the biome has been stable while win conditions hold. */
   stableTicks: number;
