@@ -3,7 +3,7 @@ import { databankPosition, generateMap } from './map';
 import { windAt } from './wind';
 import type { Building, BuildingKind, GameState, Inventory, Tile } from './types';
 
-export const STATE_VERSION = 6;
+export const STATE_VERSION = 7;
 
 export function emptyInventory(): Inventory {
   return { input: {}, output: {} };
@@ -81,6 +81,8 @@ export function createInitialState(config: Config): GameState {
     },
     stats: { collapses: 0, maxBeltTiles: 0 },
     acidRainEpisode: false,
+    selfSufficiency: { soil: 0, irrigation: 0, river: 0, pollination: 0, total: 0 },
+    lastBiome: { riverQuality: config.start.riverQuality, bees: 0, plantTiles: 0 },
     stableTicks: 0,
     wonAtTick: null,
   };

@@ -53,6 +53,7 @@ export function renderTopbar(el: HTMLElement, state: GameState, speedIndex: numb
           ? ` <span class="badge warn-soft">nad ${config.pollution.warningAbove}!</span>`
           : ''
     }</span>
+    <span class="stat" title="Jakou část práce dělají živé druhy místo strojů. K výhře je potřeba ${fmt(config.win.selfSufficiency * 100)} %.">🌿 Soběstačnost <b>${fmt(state.selfSufficiency.total * 100)} %</b></span>
     <span class="stat">⏱ Tick <b>${fmt(state.tick)}</b></span>`,
   );
 }

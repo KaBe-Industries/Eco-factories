@@ -1,5 +1,5 @@
 import { config } from './config';
-import { applyCommand, createInitialState, isBuildable, isGridNode, step, wireEnds } from './sim';
+import { applyCommand, createInitialState, isBuildable, isGridNode, step, stepMany, wireEnds } from './sim';
 import type { BuildableKind, Command, GameState, SpeciesId } from './sim';
 import { isBuildTool, plantSpecies, type Tool } from './ui/tools';
 import { drawMap } from './ui/canvas';
@@ -10,12 +10,25 @@ import type { OverlayMode } from './ui/overlay';
 import { tooltipHtml } from './ui/tooltip';
 import { setHtml } from './ui/dom';
 import { renderGhost } from './ui/ghost';
+import { clearSave, loadGame, saveGame, saveKey } from './ui/storage';
+import { winHtml } from './ui/winscreen';
+import { debugHtml } from './ui/debug';
 
 // ---- UI state (not part of the simulation) -------------------------------
 /** Playtest mode: more starting material for trying things out (see config.playtest). */
 const playtest = config.playtest.enabled && !new URLSearchParams(location.search).has('ostre');
-let state: GameState = createInitialState(config);
-if (playtest) state = { ...state, material: config.playtest.startMaterial };
+const SAVE_KEY = saveKey(playtest);
+
+function newGame(): GameState {
+  const s = createInitialState(config);
+  return playtest ? { ...s, material: config.playtest.startMaterial } : s;
+}
+
+let state: GameState = loadGame(SAVE_KEY) ?? newGame();
+let lastSavedTick = state.tick;
+/** The win screen was closed with "keep playing". */
+let winDismissed = state.wonAtTick !== null;
+let debugOpen = false;
 let speedIndex = 1; // 1× by default
 let lastSpeedIndex = 1;
 let overlay: OverlayMode = 'none';
@@ -42,6 +55,37 @@ mapWrap.appendChild(popup);
 const ghost = document.createElement('div');
 ghost.id = 'ghost';
 mapWrap.appendChild(ghost);
+const winOverlay = document.createElement('div');
+winOverlay.id = 'win';
+document.body.appendChild(winOverlay);
+const debugPanel = document.createElement('div');
+debugPanel.id = 'debug';
+document.body.appendChild(debugPanel);
+
+winOverlay.addEventListener('click', (e) => {
+  const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('button[data-win]');
+  if (!btn) return;
+  if (btn.dataset.win === 'continue') winDismissed = true;
+  if (btn.dataset.win === 'new') startNewGame();
+  render();
+});
+
+debugPanel.addEventListener('click', (e) => {
+  const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('button[data-debug]');
+  if (btn?.dataset.debug === 'skip') {
+    state = stepMany(state, config, 100);
+    render();
+  }
+});
+
+function startNewGame(): void {
+  clearSave(SAVE_KEY);
+  state = newGame();
+  lastSavedTick = state.tick;
+  winDismissed = false;
+  setTool(null);
+}
+
 ghost.addEventListener('click', (e) => {
   if ((e.target as HTMLElement).closest('[data-ghost]')) send({ type: 'dismissGhost' });
 });
@@ -83,6 +127,11 @@ function render(): void {
   renderTopbar(topbar, state, speedIndex, playtest);
   renderSidepanel(side, state, tool, overlay);
   renderGhost(ghost, state);
+  const showWin = state.wonAtTick !== null && !winDismissed;
+  if (showWin) setHtml(winOverlay, winHtml(state));
+  winOverlay.style.display = showWin ? 'flex' : 'none';
+  debugPanel.style.display = debugOpen ? 'block' : 'none';
+  if (debugOpen) setHtml(debugPanel, debugHtml(state));
   drawMap(canvas, state, {
     overlay,
     hover,
@@ -127,6 +176,11 @@ topbar.addEventListener('click', (e) => {
 side.addEventListener('click', (e) => {
   const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('button');
   if (!btn || btn.disabled) return;
+  if (btn.dataset.action === 'new') {
+    if (confirm('Začít novou hru? Rozehraná hra se smaže.')) startNewGame();
+    render();
+    return;
+  }
   if (btn.dataset.overlay) overlay = btn.dataset.overlay as OverlayMode;
   if (btn.dataset.thaw) send({ type: 'thaw', species: btn.dataset.thaw as SpeciesId });
   if (btn.dataset.plant) {
@@ -271,21 +325,37 @@ window.addEventListener('keydown', (e) => {
   } else if (e.key === ' ') {
     e.preventDefault();
     setSpeed(speedIndex === 0 ? lastSpeedIndex : 0);
+  } else if (e.key === 'd' || e.key === 'D') {
+    debugOpen = !debugOpen;
+    render();
   }
 });
 
 // ---- Game loop --------------------------------------------------------------
+/** Most ticks simulated in one animation frame. */
+const MAX_TICKS_PER_FRAME = 10;
+
+window.addEventListener('beforeunload', () => saveGame(SAVE_KEY, state));
+
 function frame(now: number): void {
   const speed = config.time.speeds[speedIndex];
   accumulator += (now - last) * speed;
   last = now;
   let changed = false;
+  // After a long pause (e.g. a background tab) don't try to catch up all at once
+  accumulator = Math.min(accumulator, config.time.msPerTick * MAX_TICKS_PER_FRAME);
   while (accumulator >= config.time.msPerTick) {
     state = step(state, config);
     accumulator -= config.time.msPerTick;
     changed = true;
   }
-  if (changed) render();
+  if (changed) {
+    if (state.tick - lastSavedTick >= config.save.everyTicks) {
+      saveGame(SAVE_KEY, state);
+      lastSavedTick = state.tick;
+    }
+    render();
+  }
   requestAnimationFrame(frame);
 }
 

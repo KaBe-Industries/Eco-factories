@@ -11,3 +11,5 @@ export * from './environment';
 export * from './species';
 export * from './pollution';
 export * from './ghost';
+export * from './victory';
+export * from './save';

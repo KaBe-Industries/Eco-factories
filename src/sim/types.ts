@@ -90,6 +90,15 @@ export interface Building {
   power: number;
 }
 
+export interface SelfSufficiency {
+  soil: number;
+  irrigation: number;
+  river: number;
+  pollination: number;
+  /** Average of the four. */
+  total: number;
+}
+
 /** A wire laid by the player between two grid nodes (phase 2b). */
 export interface Wire {
   id: number;
@@ -185,6 +194,11 @@ export interface GameState {
 
   /** An acid rain episode is running (ends when pollution falls below the warning limit). */
   acidRainEpisode: boolean;
+
+  /** Share of each life function done by living species (0–1), updated every tick. */
+  selfSufficiency: SelfSufficiency;
+  /** Values from the previous tick, to tell whether the biome is stable. */
+  lastBiome: { riverQuality: number; bees: number; plantTiles: number };
 
   /** Consecutive ticks the biome has been stable while win conditions hold. */
   stableTicks: number;

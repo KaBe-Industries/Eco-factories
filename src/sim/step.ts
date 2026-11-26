@@ -3,6 +3,7 @@ import { updateGrid } from './grid';
 import { updateRuins } from './buildings';
 import type { GameState } from './types';
 import { updateWind } from './wind';
+import { updateVictory } from './victory';
 import { updateAcidRain, updateCoalSoil, updatePollution } from './pollution';
 import { updateEnvironment, updateMachines } from './environment';
 import { beePollination, updateBees, updateFungi, updatePlants, updateThaw, updateUnlocks } from './species';
@@ -28,6 +29,7 @@ export function step(state: GameState, config: Config): GameState {
   updateAcidRain(s, config);
   updateEnvironment(s, config);
   updateUnlocks(s, config);
+  updateVictory(s, config);
   return s;
 }
 

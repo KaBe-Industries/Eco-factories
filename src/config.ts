@@ -223,6 +223,20 @@ export const config = {
     far: 0.75,
   },
 
+  /** Win condition (phase 6). */
+  win: {
+    /** Required self-sufficiency, 0–1. */
+    selfSufficiency: 0.95,
+    /** Ticks the biome must stay stable (river, bees and plants not falling). */
+    stableTicks: 60,
+  },
+
+  /** Saving to the browser (phase 6). */
+  save: {
+    /** Autosave every this many ticks. */
+    everyTicks: 10,
+  },
+
   /** Natural processes that run without the player (phase 3). */
   environment: {
     /**

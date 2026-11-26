@@ -5,6 +5,7 @@ import { isBuildTool, plantSpecies, type Tool } from './tools';
 import { BUILDING_DESCRIPTIONS, BUILDING_ICONS, BUILDING_LABELS, SPECIES_LABELS, fmt } from './labels';
 import { setHtml } from './dom';
 import { databankHtml } from './databank';
+import { selfSufficiencyHtml } from './selfsufficiency';
 import { OVERLAYS, type OverlayMode } from './overlay';
 
 function buildButton(state: GameState, kind: BuildableKind, tool: Tool): string {
@@ -54,6 +55,8 @@ export function renderSidepanel(
   setHtml(
     el,
     `
+    <h2>🌿 Soběstačnost</h2>
+    ${selfSufficiencyHtml(state)}
     <h2>🏛️ Databanka</h2>
     ${databankHtml(state, tool)}
     <h2>Energie</h2>
@@ -66,6 +69,9 @@ export function renderSidepanel(
     <h2>Overlay</h2>
     <div class="button-row">${overlayButtons}</div>
     <p class="legend">${OVERLAYS[overlay].legend}</p>
+    <h2>Hra</h2>
+    <p class="muted small">Hra se ukládá sama do tohoto prohlížeče. Klávesa D otevře ladicí panel.</p>
+    <button data-action="new">↺ Nová hra</button>
   `,
   );
 }
